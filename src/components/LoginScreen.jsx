@@ -34,59 +34,45 @@ export const LoginScreen = () => {
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: '100vh',
-      padding: '20px'
-    }}>
-      <div className="glass-panel animate-fade-in" style={{
-        width: '100%',
-        maxWidth: '450px',
-        padding: '40px',
-        textAlign: 'center'
-      }}>
-        <h2 style={{ fontSize: '2rem', marginBottom: '8px', fontWeight: '800' }}>
-          <span className="text-gradient"></span> Ticketing
-        </h2>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '30px', fontSize: '0.95rem' }}>
-          Process-Driven Client Ticket Handling System
-        </p>
+    <div className="min-h-screen flex items-center justify-center bg-canvas p-6">
+      <div className="w-full max-w-md bg-white border border-slate-200 rounded-lg p-10 text-left">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-extrabold tracking-tight text-primary">
+            Ticketing System
+          </h2>
+          <p className="text-sm text-slate-500 mt-2">
+            Penanganan Kendala Client — RBAC Console
+          </p>
+        </div>
 
         {error && (
-          <div style={{
-            background: 'rgba(239, 68, 68, 0.1)',
-            border: '1px solid rgba(239, 68, 68, 0.2)',
-            color: 'var(--danger)',
-            padding: '12px',
-            borderRadius: '8px',
-            marginBottom: '20px',
-            fontSize: '0.9rem',
-            textAlign: 'left'
-          }}>
+          <div className="bg-red-50 border border-red-200 text-red-700 text-xs p-3.5 rounded-sm mb-6">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group" style={{ textAlign: 'left' }}>
-            <label className="form-label">Email Address</label>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <div>
+            <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1.5">
+              Email Address
+            </label>
             <input
               type="email"
-              className="form-control"
-              placeholder="e.g. servicedesk@example.com"
+              className="w-full text-sm border border-slate-300 rounded-sm px-3.5 py-2 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-150"
+              placeholder="name@company.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
 
-          <div className="form-group" style={{ textAlign: 'left', marginBottom: '25px' }}>
-            <label className="form-label">Password</label>
+          <div>
+            <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1.5">
+              Password
+            </label>
             <input
               type="password"
-              className="form-control"
+              className="w-full text-sm border border-slate-300 rounded-sm px-3.5 py-2 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-150"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -96,57 +82,47 @@ export const LoginScreen = () => {
 
           <button
             type="submit"
-            className="btn btn-primary"
-            style={{ width: '100%', padding: '12px', marginBottom: '25px' }}
+            className="w-full py-2.5 bg-primary text-white font-bold text-sm rounded-sm hover:bg-primary-hover transition-colors shadow-sm mt-2 cursor-pointer"
             disabled={loading}
           >
             {loading ? 'Authenticating...' : 'Sign In'}
           </button>
         </form>
 
-        <div style={{ position: 'relative', margin: '20px 0', textAlign: 'center' }}>
-          <hr style={{ border: '0', borderTop: '1px solid var(--border-glass)' }} />
-          <span style={{
-            position: 'absolute',
-            top: '-10px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            background: '#0e0f1d',
-            padding: '0 10px',
-            fontSize: '0.8rem',
-            color: 'var(--text-muted)'
-          }}>DEMO QUICK ACCESS</span>
+        <div className="relative my-8 text-center">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-200"></div>
+          </div>
+          <span className="relative bg-white px-3.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            Demo Access Key
+          </span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+        <div className="grid grid-cols-2 gap-3">
           <button
             onClick={() => handleQuickLogin('servicedesk@example.com')}
-            className="btn btn-secondary"
-            style={{ fontSize: '0.8rem', padding: '8px' }}
+            className="border border-slate-200 text-slate-700 font-semibold text-xs py-2 px-3 rounded-sm hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer text-center"
             disabled={loading}
           >
             Service Desk
           </button>
           <button
             onClick={() => handleQuickLogin('pm@example.com')}
-            className="btn btn-secondary"
-            style={{ fontSize: '0.8rem', padding: '8px' }}
+            className="border border-slate-200 text-slate-700 font-semibold text-xs py-2 px-3 rounded-sm hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer text-center"
             disabled={loading}
           >
             Project Manager
           </button>
           <button
             onClick={() => handleQuickLogin('programmer@example.com')}
-            className="btn btn-secondary"
-            style={{ fontSize: '0.8rem', padding: '8px' }}
+            className="border border-slate-200 text-slate-700 font-semibold text-xs py-2 px-3 rounded-sm hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer text-center"
             disabled={loading}
           >
             Programmer
           </button>
           <button
             onClick={() => handleQuickLogin('owner@example.com')}
-            className="btn btn-secondary"
-            style={{ fontSize: '0.8rem', padding: '8px' }}
+            className="border border-slate-200 text-slate-700 font-semibold text-xs py-2 px-3 rounded-sm hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer text-center"
             disabled={loading}
           >
             Owner

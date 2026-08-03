@@ -1,0 +1,152 @@
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import axios from 'axios';
+
+export const MyTasks = () => {
+  const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchTickets = async () => {
+    try {
+      const response = await axios.get('/tickets');
+      setTickets(response.data);
+    } catch (err) {
+      console.error("Failed to load programmer tasks", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTickets();
+  }, []);
+
+  const openTasks = tickets.filter(t => t.status === 'assigned' || t.status === 'in_progress');
+  const finishedTasks = tickets.filter(t => t.status === 'resolved' || t.status === 'closed');
+
+  const getPriorityBar = (priority) => {
+    switch (priority) {
+      case 'low': return 'bg-blue-500';
+      case 'medium': return 'bg-amber-400';
+      case 'high': return 'bg-red-600';
+      default: return 'bg-slate-300';
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'assigned': return 'bg-purple-50 text-purple-700 border border-purple-100';
+      case 'in_progress': return 'bg-amber-50 text-amber-700 border border-amber-100';
+      case 'resolved': return 'bg-emerald-50 text-emerald-700 border border-emerald-100';
+      case 'closed': return 'bg-slate-100 text-slate-600 border border-slate-200';
+      default: return 'bg-slate-50 text-slate-700 border border-slate-100';
+    }
+  };
+
+  if (loading) {
+    return <div className="text-slate-500 text-sm text-left">Loading your task backlog...</div>;
+  }
+
+  return (
+    <div className="flex-1 flex flex-col gap-8 text-left w-full">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight text-slate-900">My Backlog Tasks</h2>
+        <p className="text-sm text-slate-500">Tickets assigned to you for analysis, coding, and testing</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        {/* Active Tasks Column */}
+        <div className="flex flex-col gap-4">
+          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 pb-2">
+            Active Sprint ({openTasks.length})
+          </h3>
+          
+          {openTasks.length === 0 ? (
+            <div className="bg-white border border-slate-200 rounded-lg p-6 text-center text-slate-400 text-xs">
+              No active tasks in your queue.
+            </div>
+          ) : (
+            openTasks.map(ticket => (
+              <div
+                key={ticket.id}
+                className="bg-white border border-slate-200 rounded-lg flex overflow-hidden hover:border-primary hover:bg-primary-tint transition-all duration-150 text-left"
+              >
+                <div className={`w-1.5 self-stretch shrink-0 ${getPriorityBar(ticket.priority)}`} />
+                <div className="flex-1 p-5 flex flex-col justify-between">
+                  <div>
+                    <div className="flex justify-between items-start mb-2.5">
+                      <span className="font-mono text-xs font-bold text-primary bg-primary-tint/50 px-2 py-0.5 rounded-sm">
+                        {ticket.ticket_id || `TCK-OLD-${ticket.id}`}
+                      </span>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${getStatusBadge(ticket.status)}`}>
+                        {ticket.status.replace('_', ' ')}
+                      </span>
+                    </div>
+                    <h4 className="text-sm font-bold text-slate-900 mb-1">{ticket.title}</h4>
+                    <p className="text-xs text-slate-600 line-clamp-2 mb-3.5 leading-normal">{ticket.description}</p>
+                  </div>
+                  <div className="flex justify-between items-center text-xs border-t border-slate-100 pt-3.5 mt-2 text-slate-500">
+                    <span>Effort: <strong className="font-semibold text-slate-700">{ticket.assignments?.[0]?.estimated_hours || 0} hrs</strong></span>
+                    <Link
+                      to={`/tickets/${ticket.ticket_id || ticket.id}`}
+                      className="py-1 px-3.5 border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-[11px] rounded-sm transition-colors cursor-pointer"
+                    >
+                      Update Status
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Completed Tasks Column */}
+        <div className="flex flex-col gap-4">
+          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 pb-2">
+            Resolved & Completed ({finishedTasks.length})
+          </h3>
+
+          {finishedTasks.length === 0 ? (
+            <div className="bg-white border border-slate-200 rounded-lg p-6 text-center text-slate-400 text-xs">
+              No resolved tasks found.
+            </div>
+          ) : (
+            finishedTasks.map(ticket => (
+              <div
+                key={ticket.id}
+                className="bg-white border border-slate-200 rounded-lg flex overflow-hidden opacity-75 text-left"
+              >
+                <div className={`w-1.5 self-stretch shrink-0 ${getPriorityBar(ticket.priority)}`} />
+                <div className="flex-1 p-5 flex flex-col justify-between">
+                  <div>
+                    <div className="flex justify-between items-start mb-2.5">
+                      <span className="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-sm">
+                        {ticket.ticket_id || `TCK-OLD-${ticket.id}`}
+                      </span>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${getStatusBadge(ticket.status)}`}>
+                        {ticket.status.replace('_', ' ')}
+                      </span>
+                    </div>
+                    <h4 className="text-sm font-bold text-slate-700 mb-1">{ticket.title}</h4>
+                    <p className="text-xs text-slate-500 line-clamp-2 mb-3.5 leading-normal">{ticket.description}</p>
+                  </div>
+                  <div className="flex justify-between items-center text-xs border-t border-slate-100 pt-3.5 mt-2 text-slate-500">
+                    <span>Effort: <strong className="font-semibold text-slate-700">{ticket.assignments?.[0]?.estimated_hours || 0} hrs</strong></span>
+                    <Link
+                      to={`/tickets/${ticket.ticket_id || ticket.id}`}
+                      className="py-1 px-3 text-slate-500 hover:text-primary font-bold text-[11px] hover:underline"
+                    >
+                      View Logs
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+      </div>
+    </div>
+  );
+};
