@@ -11,6 +11,11 @@ import { MyTasks } from './components/MyTasks';
 import { Reports } from './components/Reports';
 import { TicketDetail } from './components/TicketDetail';
 
+// Client Imports
+import { ClientDashboard } from './components/Client/ClientDashboard';
+import { CreateTicketForm } from './components/Client/CreateTicketForm';
+import { ClientTicketDetail } from './components/Client/ClientTicketDetail';
+
 // Route Guard Component for Role-Based Access Control
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
@@ -51,6 +56,15 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
+// Dynamic Dashboard Index Resolver based on User Role
+const DashboardIndex = () => {
+  const { user } = useAuth();
+  if (user?.role === 'client') {
+    return <ClientDashboard />;
+  }
+  return <DashboardOverview />;
+};
+
 function App() {
   return (
     <AuthProvider>
@@ -76,10 +90,29 @@ function App() {
             }
           >
             {/* Dashboard Overview landing page */}
-            <Route index element={<DashboardOverview />} />
+            <Route index element={<DashboardIndex />} />
 
             {/* General Ticket List */}
             <Route path="tickets" element={<TicketList />} />
+
+            {/* Client Ticketing Routes */}
+            <Route
+              path="client/create"
+              element={
+                <ProtectedRoute allowedRoles={['client']}>
+                  <CreateTicketForm />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="client/tickets/:ticketId"
+              element={
+                <ProtectedRoute allowedRoles={['client']}>
+                  <ClientTicketDetail />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Route based specific pages (protected by role bounds) */}
             <Route

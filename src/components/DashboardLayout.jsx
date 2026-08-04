@@ -21,6 +21,7 @@ export const DashboardLayout = () => {
       case 'project_manager': return 'Project Manager';
       case 'programmer': return 'Programmer';
       case 'owner': return 'Company Owner';
+      case 'client': return 'Client / Reporter';
       default: return role;
     }
   };
@@ -51,6 +52,12 @@ export const DashboardLayout = () => {
         return [
           ...defaultMenu,
           { name: 'System Reports', path: '/reports', icon: BarChart3 },
+        ];
+      case 'client':
+        return [
+          { name: 'Dashboard Overview', path: '/', icon: LayoutDashboard },
+          { name: 'Buat Tiket', path: '/client/create', icon: FilePlus },
+          { name: 'Riwayat Tiket', path: '/tickets', icon: ClipboardList },
         ];
       default:
         return defaultMenu;

@@ -98,7 +98,7 @@ export const LoginScreen = () => {
           </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <button
             onClick={() => handleQuickLogin('servicedesk@example.com')}
             className="border border-slate-200 text-slate-700 font-semibold text-xs py-2 px-3 rounded-sm hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer text-center"
@@ -126,6 +126,13 @@ export const LoginScreen = () => {
             disabled={loading}
           >
             Owner
+          </button>
+          <button
+            onClick={() => handleQuickLogin('client@example.com')}
+            className="border border-slate-200 text-slate-700 font-semibold text-xs py-2 px-3 rounded-sm hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer text-center col-span-2 sm:col-span-1"
+            disabled={loading}
+          >
+            Client
           </button>
         </div>
       </div>
