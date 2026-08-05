@@ -7,7 +7,6 @@ export const CreateTicketForm = () => {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Software');
-  const [priority, setPriority] = useState('Medium');
   const [description, setDescription] = useState('');
   const [attachment, setAttachment] = useState(null);
   
@@ -28,7 +27,6 @@ export const CreateTicketForm = () => {
     const formData = new FormData();
     formData.append('title', title);
     formData.append('category', category);
-    formData.append('priority', priority);
     formData.append('description', description);
     if (attachment) {
       formData.append('attachment', attachment);
@@ -40,13 +38,13 @@ export const CreateTicketForm = () => {
           'Content-Type': 'multipart/form-data'
         }
       });
-      setSuccess('Support ticket successfully filed!');
+      setSuccess('Tiket bantuan berhasil dikirim!');
       const createdTicket = response.data;
       setTimeout(() => {
         navigate(`/client/tickets/${createdTicket.ticket_id}`);
       }, 1500);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to submit support ticket.');
+      setError(err.response?.data?.message || 'Gagal mengirimkan tiket bantuan.');
     } finally {
       setSubmitting(false);
     }
@@ -65,8 +63,8 @@ export const CreateTicketForm = () => {
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900">File Support Ticket</h2>
-        <p className="text-sm text-slate-500">Log your system concern and our technical staff will coordinate resolution.</p>
+        <h2 className="text-2xl font-bold tracking-tight text-slate-900">Buat Tiket Baru</h2>
+        <p className="text-sm text-slate-500">Laporkan kendala sistem Anda dan tim teknisi kami akan segera menanganinya.</p>
       </div>
 
       {error && (
@@ -87,61 +85,44 @@ export const CreateTicketForm = () => {
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <div>
             <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1.5">
-              Issue Title
+              Judul Masalah
             </label>
             <input
               type="text"
               className="w-full text-sm border border-slate-300 rounded-sm px-3.5 py-2.5 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-150"
-              placeholder="e.g. Cannot connect to database portal"
+              placeholder="Contoh: Tidak dapat masuk ke portal database"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div>
-              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1.5">
-                Issue Category
-              </label>
-              <select
-                className="w-full text-sm border border-slate-300 rounded-sm px-3.5 py-2.5 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-150 bg-white cursor-pointer"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                required
-              >
-                <option value="Jaringan">Jaringan</option>
-                <option value="Hardware">Hardware</option>
-                <option value="Software">Software</option>
-                <option value="Akun">Akun</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1.5">
-                Priority
-              </label>
-              <select
-                className="w-full text-sm border border-slate-300 rounded-sm px-3.5 py-2.5 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-150 bg-white cursor-pointer"
-                value={priority}
-                onChange={(e) => setPriority(e.target.value)}
-                required
-              >
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-              </select>
-            </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1.5">
+              Kategori Masalah
+            </label>
+            <select
+              className="w-full text-sm border border-slate-300 rounded-sm px-3.5 py-2.5 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-150 bg-white cursor-pointer"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              required
+            >
+              <option value="Jaringan">Jaringan</option>
+              <option value="Hardware">Hardware</option>
+              <option value="Software">Software</option>
+              <option value="Akun">Akun</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
           </div>
 
           <div>
             <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1.5">
-              Detailed Description
+              Deskripsi Masalah Lengkap
             </label>
             <textarea
               className="w-full text-sm border border-slate-300 rounded-sm px-3.5 py-2.5 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-150"
               rows="5"
-              placeholder="State what went wrong, steps to reproduce, or other context..."
+              placeholder="Jelaskan kendala yang terjadi, langkah-langkah untuk mereproduksi, atau konteks lainnya..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               required
@@ -150,7 +131,7 @@ export const CreateTicketForm = () => {
 
           <div>
             <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1.5">
-              Upload Screenshot / Log file (Optional)
+              Unggah Tangkapan Layar / Berkas Log (Opsional)
             </label>
             <input
               type="file"
@@ -165,14 +146,14 @@ export const CreateTicketForm = () => {
               className="flex-1 py-2.5 bg-primary hover:bg-primary-hover text-white font-bold text-sm rounded-sm transition-colors cursor-pointer"
               disabled={submitting}
             >
-              {submitting ? 'Submitting...' : 'File Ticket'}
+              {submitting ? 'Mengirim...' : 'Kirim Tiket'}
             </button>
             <button
               type="button"
               onClick={() => navigate('/')}
               className="flex-1 py-2.5 border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-sm rounded-sm transition-colors cursor-pointer"
             >
-              Cancel
+              Batal
             </button>
           </div>
         </form>

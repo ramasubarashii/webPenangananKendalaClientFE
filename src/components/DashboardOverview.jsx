@@ -46,14 +46,7 @@ export const DashboardOverview = () => {
     }
   };
 
-  const getPriorityBadge = (priority) => {
-    switch (priority) {
-      case 'low': return 'bg-blue-50 text-blue-700 border border-blue-100';
-      case 'medium': return 'bg-amber-50 text-amber-700 border border-amber-100';
-      case 'high': return 'bg-red-50 text-red-700 border border-red-100';
-      default: return 'bg-slate-50 text-slate-700 border border-slate-100';
-    }
-  };
+
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -171,7 +164,6 @@ export const DashboardOverview = () => {
               <tr>
                 <th className="px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider">ID</th>
                 <th className="px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Title</th>
-                <th className="px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Priority</th>
                 <th className="px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
                 <th className="px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Creator</th>
               </tr>
@@ -184,11 +176,6 @@ export const DashboardOverview = () => {
                     <Link to={`/tickets/${ticket.ticket_id || ticket.id}`} className="hover:underline text-slate-900">
                       {ticket.title}
                     </Link>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${getPriorityBadge(ticket.priority)}`}>
-                      {ticket.priority}
-                    </span>
                   </td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${getStatusBadge(ticket.status)}`}>

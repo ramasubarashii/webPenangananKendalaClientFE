@@ -35,15 +35,7 @@ export const ClientTicketDetail = () => {
     fetchTicket();
   }, [ticketId]);
 
-  const getPriorityBadge = (priority) => {
-    const p = priority?.toLowerCase();
-    switch (p) {
-      case 'low': return 'bg-blue-50 text-blue-700 border border-blue-100';
-      case 'medium': return 'bg-amber-50 text-amber-700 border border-amber-100';
-      case 'high': return 'bg-red-50 text-red-700 border border-red-100';
-      default: return 'bg-slate-50 text-slate-700 border border-slate-100';
-    }
-  };
+
 
   const getStatusBadge = (status) => {
     const s = status?.toLowerCase();
@@ -98,9 +90,6 @@ export const ClientTicketDetail = () => {
           <div className="flex items-center gap-3 mb-2">
             <span className="font-mono text-xs font-bold text-primary bg-primary-tint py-0.5 px-2 rounded-sm border border-primary/10">
               {ticket.ticket_id || `TCK-OLD-${ticket.id}`}
-            </span>
-            <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${getPriorityBadge(ticket.priority)}`}>
-              {ticket.priority} Priority
             </span>
             <span className="text-xs font-semibold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-sm">
               Kategori: {ticket.category || 'N/A'}
@@ -189,7 +178,7 @@ export const ClientTicketDetail = () => {
         {/* Right Side: Assignment Info (Read-only) */}
         <div>
           <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Resource Allocation</h3>
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Alokasi Sumber Daya</h3>
             {ticket.assignments && ticket.assignments.length > 0 ? (
               <div className="flex flex-col gap-3 text-xs">
                 <div>
@@ -200,20 +189,20 @@ export const ClientTicketDetail = () => {
                 </div>
                 <div>
                   <span className="text-slate-400 block mb-0.5 flex items-center gap-1">
-                    <User className="w-3 h-3 text-slate-400" /> Assigned Developer
+                    <User className="w-3 h-3 text-slate-400" /> Programmer Ditugaskan
                   </span>
                   <span className="font-bold text-slate-800">{ticket.assignments[0].programmer?.name}</span>
                 </div>
                 <div>
                   <span className="text-slate-400 block mb-0.5 flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-slate-400" /> Estimated Effort
+                    <Clock className="w-3 h-3 text-slate-400" /> Estimasi Waktu
                   </span>
-                  <span className="font-bold text-slate-800">{ticket.assignments[0].estimated_hours} Hours</span>
+                  <span className="font-bold text-slate-800">{ticket.assignments[0].estimated_hours} Jam</span>
                 </div>
               </div>
             ) : (
               <div className="text-slate-400 text-xs py-4 text-center italic">
-                Waiting for Project Manager to assign developer and estimate hours.
+                Menunggu Project Manager menugaskan programmer dan mengestimasi jam kerja.
               </div>
             )}
           </div>
