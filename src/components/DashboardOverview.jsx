@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Bell } from 'lucide-react';
 import { useAuth } from '../AuthContext';
 import axios from 'axios';
 
@@ -73,9 +74,15 @@ export const DashboardOverview = () => {
 
   return (
     <div className="flex-1 flex flex-col gap-6 text-left w-full">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900">{getGreeting()}</h2>
-        <p className="text-sm text-slate-500">Welcome back, {user?.name}. Operational workflow indexes are up to date.</p>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">{getGreeting()}</h2>
+          <p className="text-sm text-slate-500">Welcome back, {user?.name}. Operational workflow indexes are up to date.</p>
+        </div>
+        <div className="relative inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 shadow-sm">
+          <Bell className="h-5 w-5" />
+          <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white" />
+        </div>
       </div>
 
       {/* Action Cards Grid */}
