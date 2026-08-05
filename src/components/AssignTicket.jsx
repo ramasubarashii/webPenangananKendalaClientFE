@@ -21,23 +21,7 @@ export const AssignTicket = () => {
     fetchTickets();
   }, []);
 
-  const getPriorityBar = (priority) => {
-    switch (priority) {
-      case 'low': return 'bg-blue-500';
-      case 'medium': return 'bg-amber-400';
-      case 'high': return 'bg-red-600';
-      default: return 'bg-slate-300';
-    }
-  };
 
-  const getPriorityBadge = (priority) => {
-    switch (priority) {
-      case 'low': return 'bg-blue-50 text-blue-700 border border-blue-100';
-      case 'medium': return 'bg-amber-50 text-amber-700 border border-amber-100';
-      case 'high': return 'bg-red-50 text-red-700 border border-red-100';
-      default: return 'bg-slate-50 text-slate-700 border border-slate-100';
-    }
-  };
 
   if (loading) {
     return <div className="text-slate-500 text-sm text-left">Loading unassigned queue...</div>;
@@ -61,17 +45,13 @@ export const AssignTicket = () => {
               key={ticket.id}
               className="bg-white border border-slate-200 rounded-lg flex overflow-hidden hover:border-primary hover:bg-primary-tint transition-all duration-150 text-left"
             >
-              {/* Priority Bar Indicator */}
-              <div className={`w-1.5 self-stretch shrink-0 ${getPriorityBar(ticket.priority)}`} />
+
               
               <div className="flex-1 p-6 flex flex-col justify-between">
                 <div>
                   <div className="flex justify-between items-start mb-2.5">
                     <span className="font-mono text-xs font-bold text-primary bg-primary-tint/50 px-2 py-0.5 rounded-sm">
                       {ticket.ticket_id || `TCK-OLD-${ticket.id}`}
-                    </span>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${getPriorityBadge(ticket.priority)}`}>
-                      {ticket.priority}
                     </span>
                   </div>
                   <h3 className="text-base font-bold text-slate-900 mb-2 truncate">{ticket.title}</h3>

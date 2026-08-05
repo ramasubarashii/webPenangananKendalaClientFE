@@ -24,14 +24,7 @@ export const MyTasks = () => {
   const openTasks = tickets.filter(t => t.status === 'assigned' || t.status === 'in_progress');
   const finishedTasks = tickets.filter(t => t.status === 'resolved' || t.status === 'closed');
 
-  const getPriorityBar = (priority) => {
-    switch (priority) {
-      case 'low': return 'bg-blue-500';
-      case 'medium': return 'bg-amber-400';
-      case 'high': return 'bg-red-600';
-      default: return 'bg-slate-300';
-    }
-  };
+
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -72,7 +65,7 @@ export const MyTasks = () => {
                 key={ticket.id}
                 className="bg-white border border-slate-200 rounded-lg flex overflow-hidden hover:border-primary hover:bg-primary-tint transition-all duration-150 text-left"
               >
-                <div className={`w-1.5 self-stretch shrink-0 ${getPriorityBar(ticket.priority)}`} />
+
                 <div className="flex-1 p-5 flex flex-col justify-between">
                   <div>
                     <div className="flex justify-between items-start mb-2.5">
@@ -117,7 +110,7 @@ export const MyTasks = () => {
                 key={ticket.id}
                 className="bg-white border border-slate-200 rounded-lg flex overflow-hidden opacity-75 text-left"
               >
-                <div className={`w-1.5 self-stretch shrink-0 ${getPriorityBar(ticket.priority)}`} />
+
                 <div className="flex-1 p-5 flex flex-col justify-between">
                   <div>
                     <div className="flex justify-between items-start mb-2.5">
