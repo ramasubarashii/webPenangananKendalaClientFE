@@ -46,7 +46,7 @@ export const AssignTicket = () => {
               className="bg-white border border-slate-200 rounded-lg flex overflow-hidden hover:border-primary hover:bg-primary-tint transition-all duration-150 text-left"
             >
 
-              
+
               <div className="flex-1 p-6 flex flex-col justify-between">
                 <div>
                   <div className="flex justify-between items-start mb-2.5">

@@ -6,7 +6,6 @@ import { AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 export const CreateTicketForm = () => {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('Software');
   const [description, setDescription] = useState('');
   const [attachment, setAttachment] = useState(null);
   
@@ -26,7 +25,6 @@ export const CreateTicketForm = () => {
 
     const formData = new FormData();
     formData.append('title', title);
-    formData.append('category', category);
     formData.append('description', description);
     if (attachment) {
       formData.append('attachment', attachment);
@@ -95,24 +93,6 @@ export const CreateTicketForm = () => {
               onChange={(e) => setTitle(e.target.value)}
               required
             />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1.5">
-              Kategori Masalah
-            </label>
-            <select
-              className="w-full text-sm border border-slate-300 rounded-sm px-3.5 py-2.5 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-150 bg-white cursor-pointer"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              required
-            >
-              <option value="Jaringan">Jaringan</option>
-              <option value="Hardware">Hardware</option>
-              <option value="Software">Software</option>
-              <option value="Akun">Akun</option>
-              <option value="Lainnya">Lainnya</option>
-            </select>
           </div>
 
           <div>

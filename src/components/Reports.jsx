@@ -103,7 +103,7 @@ export const Reports = () => {
       {/* Audit Log timeline feed */}
       <div className="bg-white border border-slate-200 rounded-lg p-6">
         <h3 className="text-base font-bold text-slate-900 mb-6">Recent Operational Activity Feed</h3>
-        
+
         {logsFeed.length === 0 ? (
           <p className="text-center text-slate-400 text-sm py-8">No logged activity found.</p>
         ) : (
@@ -115,7 +115,7 @@ export const Reports = () => {
                   <div className="w-2.5 h-2.5 rounded-full bg-primary mt-1.5 shrink-0" />
                   <div className="w-0.5 flex-1 bg-slate-200 my-1" />
                 </div>
-                
+
                 {/* Log details */}
                 <div className="flex-1 pb-4 border-b border-slate-100">
                   <div className="flex justify-between items-start gap-4">

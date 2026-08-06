@@ -10,7 +10,7 @@ export const ServiceDeskDashboard = ({
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState('medium');
+  const [priority, setPriority] = useState('belum_ditentukan');
   const [attachment, setAttachment] = useState(null);
 
   const [statusNote, setStatusNote] = useState('');

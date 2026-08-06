@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { 
-  PlusCircle, 
-  FileText, 
-  Clock, 
+import {
+  PlusCircle,
+  FileText,
+  Clock,
   CheckCircle,
   Inbox,
   Bell,
@@ -16,7 +16,7 @@ import {
 export const ClientDashboard = () => {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Search, Filter, and Pagination States
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -40,7 +40,7 @@ export const ClientDashboard = () => {
 
   // Metric Calculation
   const totalTickets = tickets.length;
-  
+
   const activeTickets = tickets.filter(t => {
     const s = t.status?.toLowerCase();
     return s === 'open' || s === 'assigned' || s === 'in_progress' || s === 'in progress';
@@ -56,9 +56,9 @@ export const ClientDashboard = () => {
     const ticketIdStr = (ticket.ticket_id || '').toLowerCase();
     const titleStr = (ticket.title || '').toLowerCase();
     const query = searchQuery.toLowerCase();
-    
+
     const matchesSearch = ticketIdStr.includes(query) || titleStr.includes(query);
-    
+
     let matchesStatus = true;
     if (statusFilter !== 'all') {
       const s = ticket.status?.toLowerCase();
@@ -70,7 +70,7 @@ export const ClientDashboard = () => {
         matchesStatus = s === 'closed' || s === 'resolved';
       }
     }
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -134,7 +134,7 @@ export const ClientDashboard = () => {
 
       {/* Grid: Stat Cards & Actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        
+
         {/* Action Card: Buat Tiket Baru */}
         <div className="bg-white border border-slate-200 rounded-lg p-6 flex flex-col justify-between h-36 hover:border-primary transition-all duration-150 shadow-sm">
           <div>
@@ -191,7 +191,7 @@ export const ClientDashboard = () => {
 
       {/* Ticket Logs Table Container */}
       <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm flex flex-col gap-5">
-        
+
         {/* Table Title and Subtitle */}
         <div className="flex justify-between items-center">
           <div>
@@ -243,7 +243,7 @@ export const ClientDashboard = () => {
               {paginatedTickets.map(ticket => {
                 const s = ticket.status?.toLowerCase();
                 const hasUnreadUpdate = ticket.progress_logs && ticket.progress_logs.length > 1 && s !== 'closed' && s !== 'resolved';
-                
+
                 return (
                   <tr key={ticket.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-4 py-3 font-mono font-bold text-xs text-primary">
@@ -281,7 +281,7 @@ export const ClientDashboard = () => {
                   </tr>
                 );
               })}
-              
+
               {paginatedTickets.length === 0 && (
                 <tr>
                   <td colSpan="6" className="text-center py-10 text-slate-400 text-xs">
@@ -314,16 +314,15 @@ export const ClientDashboard = () => {
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
-              
+
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                 <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
-                  className={`w-7 h-7 font-bold rounded-sm border transition-colors cursor-pointer ${
-                    currentPage === page
-                      ? 'bg-primary border-primary text-white'
-                      : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                  }`}
+                  className={`w-7 h-7 font-bold rounded-sm border transition-colors cursor-pointer ${currentPage === page
+                    ? 'bg-primary border-primary text-white'
+                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
                 >
                   {page}
                 </button>
