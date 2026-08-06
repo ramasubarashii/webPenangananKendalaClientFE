@@ -13,7 +13,14 @@ import {
   HelpCircle,
   FileDown,
   Copy,
-  Check
+  Check,
+  Lock,
+  Crown,
+  XCircle,
+  MessageSquare,
+  RotateCcw,
+  AlertTriangle,
+  Send
 } from 'lucide-react';
 
 export const TicketDetail = () => {
@@ -46,6 +53,88 @@ export const TicketDetail = () => {
   const [escalateNotes, setEscalateNotes] = useState('');
   const [escalatePriority, setEscalatePriority] = useState('belum_ditentukan');
   const [escalateCategory, setEscalateCategory] = useState('Software');
+
+  // PM Review & Owner Escalation States
+  const [pmReviewNotes, setPmReviewNotes] = useState('');
+  const [isOwnerModalOpen, setIsOwnerModalOpen] = useState(false);
+  const [ownerEscalationNotes, setOwnerEscalationNotes] = useState('');
+  const [ownerDecisionNotes, setOwnerDecisionNotes] = useState('');
+
+  const handlePmReviewSubmit = async (decision) => {
+    setActionError('');
+    setActionSuccess('');
+
+    if (!pmReviewNotes.trim()) {
+      setActionError('Harap berikan catatan evaluasi untuk keputusan review.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await axios.post(`/tickets/${ticket.ticket_id || ticket.id}/pm-review`, {
+        decision,
+        notes: pmReviewNotes
+      });
+      setPmReviewNotes('');
+      setActionSuccess(res.data.message);
+      await fetchTicket();
+    } catch (err) {
+      setActionError(err.response?.data?.message || 'Gagal menyimpan review PM.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleEscalateOwnerSubmit = async (e) => {
+    if (e) e.preventDefault();
+    setActionError('');
+    setActionSuccess('');
+
+    if (!ownerEscalationNotes.trim()) {
+      setActionError('Harap isi catatan eskalasi untuk Owner.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await axios.post(`/tickets/${ticket.ticket_id || ticket.id}/escalate-owner`, {
+        notes: ownerEscalationNotes
+      });
+      setIsOwnerModalOpen(false);
+      setOwnerEscalationNotes('');
+      setActionSuccess(res.data.message);
+      await fetchTicket();
+    } catch (err) {
+      setActionError(err.response?.data?.message || 'Gagal menyerahkan tiket ke Owner.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleOwnerDecisionSubmit = async (decision) => {
+    setActionError('');
+    setActionSuccess('');
+
+    if (!ownerDecisionNotes.trim()) {
+      setActionError('Harap berikan catatan instruksi/keputusan Owner.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await axios.post(`/tickets/${ticket.ticket_id || ticket.id}/owner-decision`, {
+        decision,
+        notes: ownerDecisionNotes
+      });
+      setOwnerDecisionNotes('');
+      setActionSuccess(res.data.message);
+      await fetchTicket();
+    } catch (err) {
+      setActionError(err.response?.data?.message || 'Gagal menyimpan keputusan Owner.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleCopy = (idStr) => {
     navigator.clipboard.writeText(idStr);
@@ -377,10 +466,10 @@ export const TicketDetail = () => {
               <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Proses Log & Riwayat Audit</h3>
               <div className="flex items-center gap-2 text-[10px]">
                 <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded font-bold flex items-center gap-1">
-                  🔒 Internal Only
+                  <Lock className="w-3 h-3" /> Internal Only
                 </span>
                 <span className="bg-sky-50 text-sky-700 border border-sky-200 px-2 py-0.5 rounded font-bold flex items-center gap-1">
-                  💬 Balasan Publik
+                  <MessageSquare className="w-3 h-3" /> Balasan Publik
                 </span>
               </div>
             </div>
@@ -436,35 +525,46 @@ export const TicketDetail = () => {
               })}
             </div>
 
-            {/* Staff New Note / Reply Box */}
-            <div className="border-t border-slate-100 pt-5 flex flex-col gap-3">
-              <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Tambah Catatan atau Pesan</h4>
-              <textarea
-                className="w-full text-xs border border-slate-300 rounded-sm p-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-white"
-                rows="3"
-                placeholder="Tulis catatan analisis internal atau balasan pesan resmi untuk klien..."
-                value={newLogNotes}
-                onChange={(e) => setNewLogNotes(e.target.value)}
-              />
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => handleAddLogSubmit(true)}
-                  disabled={submitting}
-                  className="flex-1 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <span>🔒 Simpan Catatan Internal</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleAddLogSubmit(false)}
-                  disabled={submitting}
-                  className="flex-1 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <span>💬 Kirim Balasan ke Klien</span>
-                </button>
+            {/* Staff New Note / Reply Box (Locked if Closed or Rejected) */}
+            {['closed', 'rejected'].includes(ticket.status?.toLowerCase()) ? (
+              <div className="border-t border-slate-100 pt-4">
+                <div className="bg-slate-100 border border-slate-200 text-slate-600 p-3.5 rounded-md text-xs flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-slate-500 shrink-0" />
+                  <span>Tiket ini telah {ticket.status?.toLowerCase() === 'closed' ? 'ditutup' : 'ditolak'} secara permanen. Fitur penambahan catatan internal maupun pesan publik telah dikunci.</span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="border-t border-slate-100 pt-5 flex flex-col gap-3">
+                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Tambah Catatan atau Pesan</h4>
+                <textarea
+                  className="w-full text-xs border border-slate-300 rounded-sm p-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-white"
+                  rows="3"
+                  placeholder="Tulis catatan analisis internal atau balasan pesan resmi untuk klien..."
+                  value={newLogNotes}
+                  onChange={(e) => setNewLogNotes(e.target.value)}
+                />
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleAddLogSubmit(true)}
+                    disabled={submitting}
+                    className="flex-1 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>Simpan Catatan Internal</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleAddLogSubmit(false)}
+                    disabled={submitting}
+                    className="flex-1 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>Kirim Balasan ke Klien</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -500,7 +600,7 @@ export const TicketDetail = () => {
 
           {/* Action Sections */}
 
-          {/* PM Resource Assignment */}
+          {/* PM Resource Assignment & Direct Owner Escalation */}
           {user?.role === 'project_manager' && ticket.status === 'escalated_to_pm' && (
             <div className="bg-white border border-primary/20 bg-primary-tint/10 rounded-lg p-5 flex flex-col gap-4">
               <h3 className="text-xs font-bold text-primary uppercase tracking-wider">Allocate Resource (PM)</h3>
@@ -541,12 +641,141 @@ export const TicketDetail = () => {
 
                 <button
                   type="submit"
-                  className="w-full py-2 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-sm transition-colors cursor-pointer"
+                  className="w-full py-2 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                   disabled={submitting}
                 >
-                  {submitting ? 'Assigning...' : 'Assign Programmer'}
+                  <User className="w-3.5 h-3.5" />
+                  <span>{submitting ? 'Assigning...' : 'Assign Programmer'}</span>
                 </button>
               </form>
+
+              {/* Direct PM to Owner Escalation without assigning Programmer */}
+              <div className="border-t border-primary/10 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setIsOwnerModalOpen(true)}
+                  className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Crown className="w-3.5 h-3.5" />
+                  <span>Eskalasikan Langsung ke Owner</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* PM Work Review Action (OK vs TIDAK OK) */}
+          {user?.role === 'project_manager' && (ticket.status === 'resolved' || ticket.status === 'in_progress' || ticket.status === 'assigned') && (
+            <div className="bg-white border border-indigo-200 bg-indigo-50/20 rounded-lg p-5 flex flex-col gap-4 shadow-sm">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xs font-bold text-indigo-900 uppercase tracking-wider">Review Hasil Pengerjaan PM</h3>
+                <span className="text-[10px] font-bold bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded">
+                  Status: {ticket.status.replace('_', ' ')}
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 leading-normal">
+                Tinjau pengerjaan Programmer. Pilih <strong className="text-emerald-700">OK</strong> untuk menyetujui, atau <strong className="text-red-700">TIDAK OK</strong> untuk mengembalikan ke Programmer.
+              </p>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5">
+                  Catatan Evaluasi / Instruksi Perbaikan <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  className="w-full text-xs border border-slate-300 rounded-sm p-3 focus:outline-none focus:border-indigo-600 bg-white"
+                  rows="3"
+                  placeholder="Tuliskan catatan evaluasi hasil pengerjaan atau rincian perbaikan jika TIDAK OK..."
+                  value={pmReviewNotes}
+                  onChange={(e) => setPmReviewNotes(e.target.value)}
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button
+                  type="button"
+                  onClick={() => handlePmReviewSubmit('ok')}
+                  disabled={submitting}
+                  className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <CheckCircle className="w-3.5 h-3.5" />
+                  <span>Review OK (Setujui)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePmReviewSubmit('not_ok')}
+                  disabled={submitting}
+                  className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                  <span>Review TIDAK OK (Kembalikan)</span>
+                </button>
+              </div>
+
+              {/* Escalate Issue to Owner Option */}
+              <div className="border-t border-indigo-100 pt-3 mt-1">
+                <button
+                  type="button"
+                  onClick={() => setIsOwnerModalOpen(true)}
+                  className="w-full py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Crown className="w-3.5 h-3.5" />
+                  <span>Serahkan Issue ke Owner</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Owner Decision Controls */}
+          {user?.role === 'owner' && ticket.status === 'escalated_to_owner' && (
+            <div className="bg-amber-50/60 border border-amber-300 rounded-lg p-5 flex flex-col gap-4 shadow-sm">
+              <h3 className="text-xs font-bold text-amber-900 uppercase tracking-wider">Keputusan Executive Owner</h3>
+              <p className="text-xs text-slate-700 leading-normal">
+                Tiket ini dieskalasikan oleh PM untuk mendapatkan persetujuan dan keputusan resmi dari Anda.
+              </p>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5">
+                  Catatan Keputusan Owner <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  className="w-full text-xs border border-slate-300 rounded-sm p-3 focus:outline-none focus:border-amber-600 bg-white"
+                  rows="3"
+                  placeholder="Tuliskan persetujuan, alasan penolakan, atau arahan khusus untuk PM..."
+                  value={ownerDecisionNotes}
+                  onChange={(e) => setOwnerDecisionNotes(e.target.value)}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleOwnerDecisionSubmit('approved')}
+                  disabled={submitting}
+                  className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <CheckCircle className="w-3.5 h-3.5" />
+                  <span>Setujui (Approved & Teruskan ke PM)</span>
+                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleOwnerDecisionSubmit('returned_to_pm')}
+                    disabled={submitting}
+                    className="flex-1 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Kembalikan ke PM</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleOwnerDecisionSubmit('rejected')}
+                    disabled={submitting}
+                    className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <XCircle className="w-3.5 h-3.5" />
+                    <span>Tolak (Reject)</span>
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
@@ -780,6 +1009,80 @@ export const TicketDetail = () => {
                   onClick={() => {
                     setIsEscalateModalOpen(false);
                     setEscalateNotes('');
+                  }}
+                  className="flex-1 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs rounded-sm transition-colors cursor-pointer"
+                >
+                  Batal
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* PM Escalate to Owner Modal Overlay */}
+      {isOwnerModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white border border-slate-200 rounded-lg max-w-lg w-full p-6 shadow-xl flex flex-col gap-4 text-left">
+            <div>
+              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <Crown className="w-4 h-4 text-amber-600" />
+                <span>Eskalasikan Issue ke Owner</span>
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">Serahkan tiket ini ke Owner untuk mendapatkan keputusan atau persetujuan tingkat eksekutif.</p>
+            </div>
+
+            <div className="flex flex-col gap-3 text-xs">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">ID Tiket</label>
+                <input
+                  type="text"
+                  className="w-full text-xs border border-slate-200 bg-slate-50 rounded px-3 py-2 text-slate-600 font-mono font-bold"
+                  value={ticket.ticket_id || `TCK-OLD-${ticket.id}`}
+                  disabled
+                  readOnly
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Judul Tiket</label>
+                <input
+                  type="text"
+                  className="w-full text-xs border border-slate-200 bg-slate-50 rounded px-3 py-2 text-slate-600 font-semibold"
+                  value={ticket.title}
+                  disabled
+                  readOnly
+                />
+              </div>
+            </div>
+
+            <form onSubmit={handleEscalateOwnerSubmit} className="flex flex-col gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
+                  Alasan & Catatan Eskalasi ke Owner <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  className="w-full text-xs border border-slate-300 rounded-sm px-3.5 py-2.5 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-white"
+                  rows="4"
+                  placeholder="Jelaskan alasan mengapa isu ini memerlukan persetujuan/keputusan Owner (misal: penambahan anggaran, perubahan ruang lingkup, atau kebijakan khusus)..."
+                  value={ownerEscalationNotes}
+                  onChange={(e) => setOwnerEscalationNotes(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="flex gap-3 border-t border-slate-100 pt-4">
+                <button
+                  type="submit"
+                  className="flex-1 py-2 bg-slate-900 hover:bg-black text-white font-bold text-xs rounded-sm transition-colors cursor-pointer"
+                  disabled={submitting}
+                >
+                  {submitting ? 'Mengirim...' : 'Kirim Eskalasi ke Owner'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOwnerModalOpen(false);
+                    setOwnerEscalationNotes('');
                   }}
                   className="flex-1 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs rounded-sm transition-colors cursor-pointer"
                 >

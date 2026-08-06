@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Crown } from 'lucide-react';
 
 export const OwnerDashboard = ({
   tickets,
@@ -6,10 +8,11 @@ export const OwnerDashboard = ({
   setSelectedTicket
 }) => {
   const getStats = () => {
-    const stats = { total: 0, open: 0, active: 0, resolved: 0, closed: 0 };
+    const stats = { total: 0, open: 0, active: 0, escalated_owner: 0, resolved: 0, closed: 0 };
     tickets.forEach(ticket => {
       stats.total++;
       if (ticket.status === 'open') stats.open++;
+      else if (ticket.status === 'escalated_to_owner') stats.escalated_owner++;
       else if (ticket.status === 'assigned' || ticket.status === 'in_progress') stats.active++;
       else if (ticket.status === 'resolved') stats.resolved++;
       else if (ticket.status === 'closed') stats.closed++;
@@ -32,26 +35,32 @@ export const OwnerDashboard = ({
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', flex: 1 }}>
 
       {/* Stats Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px' }}>
-        <div className="glass-panel" style={{ padding: '16px', textAlign: 'center' }}>
-          <h5 style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '6px' }}>Total Tickets</h5>
-          <span style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--text-primary)' }}>{stats.total}</span>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '12px' }}>
+        <div className="glass-panel" style={{ padding: '14px', textAlign: 'center' }}>
+          <h5 style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '6px' }}>Total Tickets</h5>
+          <span style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-primary)' }}>{stats.total}</span>
         </div>
-        <div className="glass-panel" style={{ padding: '16px', textAlign: 'center', borderBottom: '2px solid var(--info)' }}>
-          <h5 style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '6px' }}>Open (Unassigned)</h5>
-          <span style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--info)' }}>{stats.open}</span>
+        <div className="glass-panel" style={{ padding: '14px', textAlign: 'center', borderBottom: '2px solid #ea580c' }}>
+          <h5 style={{ fontSize: '0.75rem', color: '#ea580c', textTransform: 'uppercase', marginBottom: '6px', fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+            <Crown style={{ width: '14px', height: '14px' }} /> Escalated to Owner
+          </h5>
+          <span style={{ fontSize: '1.5rem', fontWeight: '800', color: '#ea580c' }}>{stats.escalated_owner}</span>
         </div>
-        <div className="glass-panel" style={{ padding: '16px', textAlign: 'center', borderBottom: '2px solid var(--warning)' }}>
-          <h5 style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '6px' }}>Active Development</h5>
-          <span style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--warning)' }}>{stats.active}</span>
+        <div className="glass-panel" style={{ padding: '14px', textAlign: 'center', borderBottom: '2px solid var(--info)' }}>
+          <h5 style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '6px' }}>Open</h5>
+          <span style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--info)' }}>{stats.open}</span>
         </div>
-        <div className="glass-panel" style={{ padding: '16px', textAlign: 'center', borderBottom: '2px solid var(--secondary)' }}>
-          <h5 style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '6px' }}>Pending Verify</h5>
-          <span style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--secondary)' }}>{stats.resolved}</span>
+        <div className="glass-panel" style={{ padding: '14px', textAlign: 'center', borderBottom: '2px solid var(--warning)' }}>
+          <h5 style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '6px' }}>Active Dev</h5>
+          <span style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--warning)' }}>{stats.active}</span>
         </div>
-        <div className="glass-panel" style={{ padding: '16px', textAlign: 'center', borderBottom: '2px solid var(--success)' }}>
-          <h5 style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '6px' }}>Closed (Resolved)</h5>
-          <span style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--success)' }}>{stats.closed}</span>
+        <div className="glass-panel" style={{ padding: '14px', textAlign: 'center', borderBottom: '2px solid var(--secondary)' }}>
+          <h5 style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '6px' }}>Resolved</h5>
+          <span style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--secondary)' }}>{stats.resolved}</span>
+        </div>
+        <div className="glass-panel" style={{ padding: '14px', textAlign: 'center', borderBottom: '2px solid var(--success)' }}>
+          <h5 style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '6px' }}>Closed</h5>
+          <span style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--success)' }}>{stats.closed}</span>
         </div>
       </div>
 
@@ -188,7 +197,7 @@ export const OwnerDashboard = ({
             </div>
           ) : (
             <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', flexDirection: 'column' }}>
-              <span style={{ fontSize: '3rem', marginBottom: '10px' }}>👑</span>
+              <Crown style={{ width: '48px', height: '48px', opacity: 0.6, marginBottom: '10px', color: '#ea580c' }} />
               <p>Select any ticket to audit its historical process logs and assignments.</p>
             </div>
           )}
