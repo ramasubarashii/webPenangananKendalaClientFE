@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import axios from 'axios';
 import {
@@ -20,6 +20,11 @@ export const TicketDetail = () => {
   const { ticketId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Security Redirect: If user is Client, redirect to public Client view
+  if (user?.role === 'client') {
+    return <Navigate to={`/client/tickets/${ticketId}`} replace />;
+  }
 
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);

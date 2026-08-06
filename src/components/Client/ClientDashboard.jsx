@@ -10,16 +10,20 @@ import {
   Bell,
   Search,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  HelpCircle,
+  Info,
+  X
 } from 'lucide-react';
 
 export const ClientDashboard = () => {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Search, Filter, and Pagination States
+  // Search, Filter, Status Modal, and Pagination States
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [showStatusModal, setShowStatusModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
@@ -212,17 +216,34 @@ export const ClientDashboard = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="w-full sm:w-48">
-            <select
-              className="w-full text-xs border border-slate-200 rounded-sm py-2.5 px-3 focus:outline-none focus:border-primary bg-white cursor-pointer"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="w-full sm:w-48">
+              <select
+                className="w-full text-xs border border-slate-200 rounded-sm py-2.5 px-3 focus:outline-none focus:border-primary bg-white cursor-pointer"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="all">Semua Status</option>
+                <option value="open">Open</option>
+                <option value="escalated_to_pm">Escalated to PM</option>
+                <option value="assigned">Assigned</option>
+                <option value="in_progress">In Progress</option>
+                <option value="resolved">Resolved</option>
+                <option value="closed">Closed</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+
+            {/* Status Information Guide Button */}
+            <button
+              type="button"
+              onClick={() => setShowStatusModal(true)}
+              className="py-2.5 px-3 bg-slate-100 hover:bg-primary-tint text-slate-700 hover:text-primary border border-slate-200 rounded-sm transition-colors cursor-pointer shrink-0 flex items-center gap-1.5 text-xs font-bold"
+              title="Panduan Informasi Status Tiket"
             >
-              <option value="all">Semua Status</option>
-              <option value="open">Open (Menunggu PM)</option>
-              <option value="in_progress">In Progress</option>
-              <option value="closed">Closed / Resolved</option>
-            </select>
+              <HelpCircle className="w-4 h-4 text-primary" />
+              <span className="hidden sm:inline">Bantuan Status</span>
+            </button>
           </div>
         </div>
 
@@ -340,6 +361,135 @@ export const ClientDashboard = () => {
         )}
 
       </div>
+
+      {/* Status Information Guide Modal Overlay */}
+      {showStatusModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white border border-slate-200 rounded-lg max-w-lg w-full p-6 shadow-xl flex flex-col gap-5 text-left">
+            
+            {/* Modal Header */}
+            <div className="flex justify-between items-start border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-primary-tint/50 rounded-md text-primary">
+                  <Info className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Panduan Informasi Status Tiket</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Penjelasan alur dan arti setiap status tiket bantuan Anda</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowStatusModal(false)}
+                className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body - Plain Text Cards Layout (NO Table) */}
+            <div className="flex flex-col gap-4 text-xs text-left max-h-[60vh] overflow-y-auto pr-1">
+              
+              {/* Open */}
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-md flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-sky-800 bg-sky-100 border border-sky-200 px-2 py-0.5 rounded text-[11px]">
+                    Open
+                  </span>
+                </div>
+                <p className="text-slate-700 text-xs leading-relaxed mt-1">
+                  Tiket Anda telah diterima oleh sistem dan sedang menunggu pengecekan awal oleh tim Service Desk kami.
+                </p>
+              </div>
+
+              {/* Escalated to PM */}
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-md flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-indigo-800 bg-indigo-100 border border-indigo-200 px-2 py-0.5 rounded text-[11px]">
+                    Escalated to PM
+                  </span>
+                </div>
+                <p className="text-slate-700 text-xs leading-relaxed mt-1">
+                  Tiket Anda sedang dianalisis oleh Manajer Proyek untuk menentukan langkah perbaikan dan alokasi tim.
+                </p>
+              </div>
+
+              {/* Assigned */}
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-md flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-purple-800 bg-purple-100 border border-purple-200 px-2 py-0.5 rounded text-[11px]">
+                    Assigned
+                  </span>
+                </div>
+                <p className="text-slate-700 text-xs leading-relaxed mt-1">
+                  Tiket Anda telah diserahkan kepada tim teknis/programmer dan sudah masuk ke dalam jadwal pengerjaan.
+                </p>
+              </div>
+
+              {/* In Progress */}
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-md flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-amber-800 bg-amber-100 border border-amber-200 px-2 py-0.5 rounded text-[11px]">
+                    In Progress
+                  </span>
+                </div>
+                <p className="text-slate-700 text-xs leading-relaxed mt-1">
+                  Tim teknis kami sedang aktif melakukan perbaikan atau pengerjaan pada tiket Anda.
+                </p>
+              </div>
+
+              {/* Resolved */}
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-md flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-emerald-800 bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded text-[11px]">
+                    Resolved
+                  </span>
+                </div>
+                <p className="text-slate-700 text-xs leading-relaxed mt-1">
+                  Pengerjaan telah selesai dan kendala berhasil diatasi. Menunggu konfirmasi akhir dari Anda.
+                </p>
+              </div>
+
+              {/* Closed */}
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-md flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-slate-700 bg-slate-200 border border-slate-300 px-2 py-0.5 rounded text-[11px]">
+                    Closed
+                  </span>
+                </div>
+                <p className="text-slate-700 text-xs leading-relaxed mt-1">
+                  Tiket telah dinyatakan selesai sepenuhnya dan ditutup secara permanen.
+                </p>
+              </div>
+
+              {/* Rejected */}
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-md flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-red-800 bg-red-100 border border-red-200 px-2 py-0.5 rounded text-[11px]">
+                    Rejected
+                  </span>
+                </div>
+                <p className="text-slate-700 text-xs leading-relaxed mt-1">
+                  Tiket tidak dapat diproses (misalnya karena duplikasi laporan atau di luar cakupan layanan). Alasan detail akan diinformasikan oleh tim kami.
+                </p>
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="border-t border-slate-100 pt-3 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowStatusModal(false)}
+                className="py-2 px-5 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-sm transition-colors cursor-pointer"
+              >
+                Tutup Panduan
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 };

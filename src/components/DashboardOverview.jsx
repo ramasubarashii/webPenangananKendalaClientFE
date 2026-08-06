@@ -247,7 +247,7 @@ export const DashboardOverview = () => {
                         </div>
                       </td>
                       <td className="px-4 py-3 font-semibold truncate max-w-xs">
-                        <Link to={`/tickets/${ticket.ticket_id || ticket.id}`} className="hover:underline text-slate-900">
+                        <Link to={user?.role === 'client' ? `/client/tickets/${ticket.ticket_id || ticket.id}` : `/tickets/${ticket.ticket_id || ticket.id}`} className="hover:underline text-slate-900">
                           {ticket.title}
                         </Link>
                       </td>
@@ -264,7 +264,7 @@ export const DashboardOverview = () => {
                       <td className="px-4 py-3 text-xs text-slate-600">{ticket.creator?.name}</td>
                       <td className="px-4 py-3 text-right">
                         <Link
-                          to={`/tickets/${ticket.ticket_id || ticket.id}`}
+                          to={user?.role === 'client' ? `/client/tickets/${ticket.ticket_id || ticket.id}` : `/tickets/${ticket.ticket_id || ticket.id}`}
                           className="text-primary hover:text-primary-hover font-bold text-xs underline"
                         >
                           Lihat Detail

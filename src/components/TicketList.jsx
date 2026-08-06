@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../AuthContext';
 import axios from 'axios';
 import { Search, Copy, Check } from 'lucide-react';
 
 export const TicketList = () => {
+  const { user } = useAuth();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('all');
@@ -176,7 +178,7 @@ export const TicketList = () => {
                       <td className="px-6 py-3.5 text-slate-600 text-xs">{ticket.creator?.name}</td>
                       <td className="px-6 py-3.5 text-right">
                         <Link
-                          to={`/tickets/${ticket.ticket_id || ticket.id}`}
+                          to={user?.role === 'client' ? `/client/tickets/${ticket.ticket_id || ticket.id}` : `/tickets/${ticket.ticket_id || ticket.id}`}
                           className="text-primary hover:text-primary-hover font-bold text-xs underline"
                         >
                           Lihat Detail
