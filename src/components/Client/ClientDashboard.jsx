@@ -10,7 +10,8 @@ import {
   Bell,
   Search,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Info
 } from 'lucide-react';
 
 export const ClientDashboard = () => {
@@ -20,8 +21,40 @@ export const ClientDashboard = () => {
   // Search, Filter, and Pagination States
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [showStatusInfo, setShowStatusInfo] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+
+  const statusInfoItems = [
+    {
+      label: 'Open',
+      description: 'Tiket Anda telah diterima oleh sistem dan sedang menunggu pengecekan awal oleh tim Service Desk kami.'
+    },
+    {
+      label: 'Escalated to PM',
+      description: 'Tiket Anda sedang dianalisis oleh Manajer Proyek untuk menentukan langkah perbaikan dan alokasi tim.'
+    },
+    {
+      label: 'Assigned',
+      description: 'Tiket Anda telah diserahkan kepada tim teknis/programmer dan sudah masuk ke dalam jadwal pengerjaan.'
+    },
+    {
+      label: 'In Progress',
+      description: 'Tim teknis kami sedang aktif melakukan perbaikan atau pengerjaan pada tiket Anda.'
+    },
+    {
+      label: 'Resolved',
+      description: 'Pengerjaan telah selesai dan kendala berhasil diatasi. Menunggu konfirmasi akhir dari Anda.'
+    },
+    {
+      label: 'Closed',
+      description: 'Tiket telah dinyatakan selesai sepenuhnya dan ditutup secara permanen.'
+    },
+    {
+      label: 'Rejected',
+      description: 'Tiket tidak dapat diproses (misalnya karena duplikasi laporan atau di luar cakupan layanan). Alasan detail akan diinformasikan oleh tim kami.'
+    }
+  ];
 
   const fetchTickets = async () => {
     try {
@@ -212,9 +245,9 @@ export const ClientDashboard = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="w-full sm:w-48">
+          <div className="flex items-center gap-2 w-full sm:w-56">
             <select
-              className="w-full text-xs border border-slate-200 rounded-sm py-2.5 px-3 focus:outline-none focus:border-primary bg-white cursor-pointer"
+              className="flex-1 text-xs border border-slate-200 rounded-sm py-2.5 px-3 focus:outline-none focus:border-primary bg-white cursor-pointer"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
@@ -223,6 +256,41 @@ export const ClientDashboard = () => {
               <option value="in_progress">In Progress</option>
               <option value="closed">Closed / Resolved</option>
             </select>
+
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowStatusInfo(prev => !prev)}
+                onMouseEnter={() => setShowStatusInfo(true)}
+                onMouseLeave={() => setShowStatusInfo(false)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-primary hover:text-primary focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                aria-label="Bantuan status tiket"
+                title="Bantuan status tiket"
+              >
+                <Info className="w-4 h-4" />
+              </button>
+
+              {showStatusInfo && (
+                <div
+                  className="absolute right-0 top-full z-20 mt-2 w-[min(92vw,24rem)] rounded-lg border border-slate-200 bg-white p-4 shadow-xl"
+                  onMouseEnter={() => setShowStatusInfo(true)}
+                  onMouseLeave={() => setShowStatusInfo(false)}
+                >
+                  <div className="mb-3">
+                    <p className="text-sm font-semibold text-slate-900">Panduan Status Tiket</p>
+                    <p className="text-xs text-slate-500 mt-1">Pahami arti setiap status tiket Anda dengan jelas.</p>
+                  </div>
+                  <div className="max-h-[60vh] overflow-y-auto space-y-3 pr-1">
+                    {statusInfoItems.map((item) => (
+                      <div key={item.label} className="text-sm leading-6 text-slate-600">
+                        <p className="font-semibold text-slate-900">{item.label}</p>
+                        <p className="text-xs text-slate-600 mt-1">{item.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
