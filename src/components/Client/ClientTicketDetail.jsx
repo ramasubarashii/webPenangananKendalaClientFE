@@ -137,74 +137,60 @@ export const ClientTicketDetail = () => {
             )}
           </div>
 
-          {/* Audit Timeline */}
+          {/* Public Progress Timeline */}
           <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-6">Proses Log & Riwayat Perkembangan</h3>
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-6">Riwayat Perkembangan Bantuan</h3>
             <div className="flex flex-col gap-5">
-              {ticket.progress_logs?.map((log, idx) => (
-                <div key={log.id} className="flex gap-4 text-xs text-left">
-                  <div className="flex flex-col items-center">
-                    <div className="w-2.5 h-2.5 rounded-full bg-primary mt-1 shrink-0" />
-                    {idx !== ticket.progress_logs.length - 1 && (
-                      <div className="w-0.5 flex-1 bg-slate-200 my-1" />
-                    )}
+              {ticket.progress_logs && ticket.progress_logs.length > 0 ? (
+                ticket.progress_logs.map((log, idx) => (
+                  <div key={log.id} className="flex gap-4 text-xs text-left">
+                    <div className="flex flex-col items-center">
+                      <div className="w-2.5 h-2.5 rounded-full bg-primary mt-1 shrink-0" />
+                      {idx !== ticket.progress_logs.length - 1 && (
+                        <div className="w-0.5 flex-1 bg-slate-200 my-1" />
+                      )}
+                    </div>
+                    <div className="flex-1 pb-4">
+                      <div className="flex justify-between items-center">
+                        <strong className="text-slate-900 font-bold">{log.user?.name || 'Tim Bantuan'}</strong>
+                        <span className="text-[10px] text-slate-400">{new Date(log.created_at).toLocaleString()}</span>
+                      </div>
+                      <div className="mt-1 flex items-center gap-1">
+                        <span className="text-slate-500">Status Laporan:</span>
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${getStatusBadge(log.new_status)}`}>
+                          {log.new_status.replace('_', ' ')}
+                        </span>
+                      </div>
+                      {log.notes && (
+                        <p className="mt-2 text-slate-700 bg-sky-50/80 border border-sky-200/80 p-3.5 rounded-sm leading-relaxed">
+                          "{log.notes}"
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex-1 pb-4">
-                    <div className="flex justify-between items-center">
-                      <strong className="text-slate-900 font-bold">{log.user?.name}</strong>
-                      <span className="text-[10px] text-slate-400">{new Date(log.created_at).toLocaleString()}</span>
-                    </div>
-                    <div className="text-slate-500 mt-0.5">
-                      Role: {log.user?.role?.replace('_', ' ')}
-                    </div>
-                    <div className="mt-1.5 flex items-center gap-1">
-                      <span>Status berubah ke:</span>
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${getStatusBadge(log.new_status)}`}>
-                        {log.new_status}
-                      </span>
-                    </div>
-                    {log.notes && (
-                      <p className="mt-2 text-slate-600 bg-slate-50 border border-slate-200 p-3 rounded-sm italic leading-relaxed">
-                        "{log.notes}"
-                      </p>
-                    )}
-                  </div>
+                ))
+              ) : (
+                <div className="text-slate-400 text-xs py-4 text-center italic">
+                  Belum ada catatan publik untuk tiket ini.
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
 
-        {/* Right Side: Assignment Info (Read-only) */}
+        {/* Right Side: Clean Client Support Info Card (No internal staff/hours data) */}
         <div>
-          <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Alokasi Sumber Daya</h3>
-            {ticket.assignments && ticket.assignments.length > 0 ? (
-              <div className="flex flex-col gap-3 text-xs">
-                <div>
-                  <span className="text-slate-400 block mb-0.5 flex items-center gap-1">
-                    <User className="w-3 h-3 text-slate-400" /> Project Manager
-                  </span>
-                  <span className="font-bold text-slate-800">{ticket.assignments[0].pm?.name}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block mb-0.5 flex items-center gap-1">
-                    <User className="w-3 h-3 text-slate-400" /> Programmer Ditugaskan
-                  </span>
-                  <span className="font-bold text-slate-800">{ticket.assignments[0].programmer?.name}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block mb-0.5 flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-slate-400" /> Estimasi Waktu
-                  </span>
-                  <span className="font-bold text-slate-800">{ticket.assignments[0].estimated_hours} Jam</span>
-                </div>
-              </div>
-            ) : (
-              <div className="text-slate-400 text-xs py-4 text-center italic">
-                Menunggu Project Manager menugaskan programmer dan mengestimasi jam kerja.
-              </div>
-            )}
+          <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm flex flex-col gap-4 text-xs">
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Status Penanganan Bantuan</h3>
+            <div className="bg-slate-50 border border-slate-200 p-4 rounded-sm flex flex-col gap-2">
+              <span className="text-slate-400 font-semibold block">Status Saat Ini</span>
+              <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold w-fit ${getStatusBadge(ticket.status)}`}>
+                {ticket.status.replace('_', ' ')}
+              </span>
+            </div>
+            <p className="text-slate-600 leading-relaxed">
+              Tim teknis kami sedang memproses laporan Anda secara intensif. Setiap pembaruan resmi akan langsung ditampilkan pada lini masa di samping.
+            </p>
           </div>
         </div>
 

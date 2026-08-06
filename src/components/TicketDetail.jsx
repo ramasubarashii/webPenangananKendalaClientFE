@@ -133,6 +133,32 @@ export const TicketDetail = () => {
     }
   };
 
+  const [newLogNotes, setNewLogNotes] = useState('');
+
+  const handleAddLogSubmit = async (isInternalTarget) => {
+    setActionError('');
+    setActionSuccess('');
+
+    if (!newLogNotes.trim()) {
+      setActionError('Harap tuliskan isi pesan atau catatan.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await axios.post(`/tickets/${ticket.ticket_id || ticket.id}/logs`, {
+        notes: newLogNotes,
+        is_internal: isInternalTarget
+      });
+      setNewLogNotes('');
+      setActionSuccess(res.data.message || 'Catatan berhasil ditambahkan.');
+      await fetchTicket();
+    } catch (err) {
+      setActionError(err.response?.data?.message || 'Gagal menambahkan catatan.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleEscalate = async (e) => {
     e.preventDefault();
     setActionError('');
@@ -340,40 +366,99 @@ export const TicketDetail = () => {
             )}
           </div>
 
-          {/* Timeline Logs */}
-          <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-6">Proses Log & Riwayat Audit</h3>
+          {/* Timeline Logs & Audit Trail */}
+          <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm flex flex-col gap-6">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Proses Log & Riwayat Audit</h3>
+              <div className="flex items-center gap-2 text-[10px]">
+                <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded font-bold flex items-center gap-1">
+                  🔒 Internal Only
+                </span>
+                <span className="bg-sky-50 text-sky-700 border border-sky-200 px-2 py-0.5 rounded font-bold flex items-center gap-1">
+                  💬 Balasan Publik
+                </span>
+              </div>
+            </div>
+
             <div className="flex flex-col gap-5">
-              {ticket.progress_logs?.map((log, idx) => (
-                <div key={log.id} className="flex gap-4 text-xs text-left">
-                  <div className="flex flex-col items-center">
-                    <div className="w-2.5 h-2.5 rounded-full bg-primary mt-1 shrink-0" />
-                    {idx !== ticket.progress_logs.length - 1 && (
-                      <div className="w-0.5 flex-1 bg-slate-200 my-1" />
-                    )}
+              {ticket.progress_logs?.map((log, idx) => {
+                const isInternal = log.is_internal !== false && log.is_internal !== 0;
+                return (
+                  <div key={log.id} className="flex gap-4 text-xs text-left">
+                    <div className="flex flex-col items-center">
+                      <div className={`w-2.5 h-2.5 rounded-full ${isInternal ? 'bg-amber-500' : 'bg-sky-500'} mt-1 shrink-0`} />
+                      {idx !== ticket.progress_logs.length - 1 && (
+                        <div className="w-0.5 flex-1 bg-slate-200 my-1" />
+                      )}
+                    </div>
+                    <div className="flex-1 pb-4">
+                      <div className="flex justify-between items-center mb-1">
+                        <div className="flex items-center gap-2">
+                          <strong className="text-slate-900 font-bold">{log.user?.name}</strong>
+                          {isInternal ? (
+                            <span className="bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.5 rounded text-[9px] font-bold">
+                              🔒 Catatan Internal / Staff Only
+                            </span>
+                          ) : (
+                            <span className="bg-sky-100 text-sky-800 border border-sky-300 px-1.5 py-0.5 rounded text-[9px] font-bold">
+                              💬 Balasan ke Klien (Publik)
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-slate-400">{new Date(log.created_at).toLocaleString()}</span>
+                      </div>
+                      <div className="text-slate-500 text-[11px]">
+                        Role: {log.user?.role?.replace('_', ' ')}
+                      </div>
+                      <div className="mt-1 flex items-center gap-1">
+                        <span>Status:</span>
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${getStatusBadge(log.new_status)}`}>
+                          {log.new_status}
+                        </span>
+                      </div>
+                      {log.notes && (
+                        <div className={`mt-2 p-3 rounded-sm text-xs leading-relaxed ${
+                          isInternal 
+                            ? 'bg-amber-50/80 border border-amber-200/90 text-amber-950 font-mono text-[11px]' 
+                            : 'bg-sky-50/80 border border-sky-200/90 text-slate-800'
+                        }`}>
+                          "{log.notes}"
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex-1 pb-4">
-                    <div className="flex justify-between items-center">
-                      <strong className="text-slate-900 font-bold">{log.user?.name}</strong>
-                      <span className="text-[10px] text-slate-400">{new Date(log.created_at).toLocaleString()}</span>
-                    </div>
-                    <div className="text-slate-500 mt-0.5">
-                      Role: {log.user?.role?.replace('_', ' ')}
-                    </div>
-                    <div className="mt-1.5 flex items-center gap-1">
-                      <span>Status berubah ke:</span>
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${getStatusBadge(log.new_status)}`}>
-                        {log.new_status}
-                      </span>
-                    </div>
-                    {log.notes && (
-                      <p className="mt-2 text-slate-600 bg-slate-50 border border-slate-200 p-3 rounded-sm italic leading-relaxed">
-                        "{log.notes}"
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
+            </div>
+
+            {/* Staff New Note / Reply Box */}
+            <div className="border-t border-slate-100 pt-5 flex flex-col gap-3">
+              <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Tambah Catatan atau Pesan</h4>
+              <textarea
+                className="w-full text-xs border border-slate-300 rounded-sm p-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-white"
+                rows="3"
+                placeholder="Tulis catatan analisis internal atau balasan pesan resmi untuk klien..."
+                value={newLogNotes}
+                onChange={(e) => setNewLogNotes(e.target.value)}
+              />
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleAddLogSubmit(true)}
+                  disabled={submitting}
+                  className="flex-1 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <span>🔒 Simpan Catatan Internal</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAddLogSubmit(false)}
+                  disabled={submitting}
+                  className="flex-1 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <span>💬 Kirim Balasan ke Klien</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
