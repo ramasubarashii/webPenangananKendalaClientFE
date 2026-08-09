@@ -15,6 +15,7 @@ import {
   Info,
   X
 } from 'lucide-react';
+import { SkeletonStatCards, SkeletonTableRows } from '../SkeletonLoader';
 
 export const ClientDashboard = () => {
   const [tickets, setTickets] = useState([]);
@@ -117,7 +118,12 @@ export const ClientDashboard = () => {
   };
 
   if (loading) {
-    return <div className="text-slate-500 text-sm text-left">Menginisialisasi area kerja klien...</div>;
+    return (
+      <div className="flex-1 flex flex-col gap-6 text-left w-full max-w-6xl mx-auto">
+        <SkeletonStatCards count={4} />
+        <SkeletonTableRows count={5} />
+      </div>
+    );
   }
 
   return (

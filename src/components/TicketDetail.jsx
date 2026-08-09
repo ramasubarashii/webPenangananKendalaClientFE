@@ -22,6 +22,7 @@ import {
   AlertTriangle,
   Send
 } from 'lucide-react';
+import { SkeletonTicketDetail } from './SkeletonLoader';
 
 export const TicketDetail = () => {
   const { ticketId } = useParams();
@@ -317,7 +318,7 @@ export const TicketDetail = () => {
   };
 
   if (loading) {
-    return <div className="text-slate-500 text-sm text-left">Memuat detail tiket...</div>;
+    return <SkeletonTicketDetail />;
   }
 
   // Graceful 404 UI State Screen
@@ -394,30 +395,30 @@ export const TicketDetail = () => {
               {formatPriorityText(ticket.priority)}
             </span>
           </div>
-          <h2 className="text-xl font-bold tracking-tight text-slate-900 mb-1">{ticket.title}</h2>
-          <p className="text-xs text-slate-500 flex items-center gap-2 mt-1.5">
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 mb-1 font-display">{ticket.title}</h2>
+          <p className="text-xs text-slate-500 flex items-center gap-2 mt-1.5 font-mono">
             <User className="w-3.5 h-3.5 text-slate-400" />
-            <span>Dilaporkan oleh {ticket.creator?.name}</span>
+            <span className="font-sans text-slate-700">Dilaporkan oleh {ticket.creator?.name}</span>
             <span className="text-slate-300">|</span>
             <Calendar className="w-3.5 h-3.5 text-slate-400" />
-            <span>{new Date(ticket.created_at).toLocaleString()}</span>
+            <span>{new Date(ticket.created_at).toLocaleString('id-ID')}</span>
           </p>
         </div>
-        <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(ticket.status)}`}>
+        <span className={`inline-flex px-3 py-1 rounded-full text-xs font-mono font-bold ${getStatusBadge(ticket.status)}`}>
           {ticket.status.replace('_', ' ')}
         </span>
       </div>
 
       {/* Inline Forms Status Notifications */}
       {actionError && (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-xs p-4 rounded-sm flex items-center gap-2">
+        <div className="bg-red-50 border border-red-200 text-red-700 text-xs p-4 rounded-md flex items-center gap-2 font-sans">
           <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
           <span>{actionError}</span>
         </div>
       )}
 
       {actionSuccess && (
-        <div className="bg-green-50 border border-green-200 text-green-700 text-xs p-4 rounded-sm flex items-center gap-2">
+        <div className="bg-green-50 border border-green-200 text-green-700 text-xs p-4 rounded-md flex items-center gap-2 font-sans">
           <CheckCircle className="w-4 h-4 text-green-600 shrink-0" />
           <span>{actionSuccess}</span>
         </div>
@@ -429,19 +430,19 @@ export const TicketDetail = () => {
         {/* Left Columns */}
         <div className="md:col-span-2 flex flex-col gap-6">
 
-          {/* Description */}
-          <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Deskripsi Masalah</h3>
-            <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed bg-slate-50 border border-slate-200 border-dashed p-4 rounded-sm">
+          {/* Description - Clean Unboxed Layout */}
+          <div className="bg-white border border-slate-200/80 rounded-xl p-6 shadow-xs flex flex-col gap-3">
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider font-display">Deskripsi Masalah</h3>
+            <div className="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed border-l-2 border-slate-300 pl-4 py-1 font-sans">
               {ticket.description}
-            </p>
+            </div>
 
             {ticket.internal_notes && (
-              <div className="mt-5 pt-5 border-t border-slate-150">
-                <h3 className="text-xs font-bold text-primary uppercase tracking-wider mb-3">Catatan Internal Service Desk</h3>
-                <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed bg-primary-tint/20 border border-primary/20 border-dashed p-4 rounded-sm">
+              <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-2">
+                <h3 className="text-xs font-bold text-primary uppercase tracking-wider font-display">Catatan Internal Service Desk</h3>
+                <div className="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed border-l-2 border-primary/40 pl-4 py-1 font-sans">
                   {ticket.internal_notes}
-                </p>
+                </div>
               </div>
             )}
 
@@ -451,25 +452,25 @@ export const TicketDetail = () => {
                   href={`http://127.0.0.1:8000/storage/${ticket.attachment_path}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="py-1.5 px-4 border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs rounded-sm transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                  className="py-1.5 px-4 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-semibold text-xs rounded-md transition-colors inline-flex items-center gap-2 cursor-pointer shadow-2xs font-sans"
                 >
-                  <FileDown className="w-3.5 h-3.5" />
+                  <FileDown className="w-4 h-4 text-primary" />
                   <span>Unduh Lampiran Berkas</span>
                 </a>
               </div>
             )}
           </div>
 
-          {/* Timeline Logs & Audit Trail */}
-          <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm flex flex-col gap-6">
+          {/* Timeline Logs & Audit Trail - Clean Unboxed Activity Feed */}
+          <div className="bg-white border border-slate-200/80 rounded-xl p-6 shadow-xs flex flex-col gap-6">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Proses Log & Riwayat Audit</h3>
-              <div className="flex items-center gap-2 text-[10px]">
-                <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded font-bold flex items-center gap-1">
-                  <Lock className="w-3 h-3" /> Internal Only
+              <h3 className="text-xs font-bold text-slate-600 uppercase tracking-wider font-display">Proses Log & Riwayat Audit</h3>
+              <div className="flex items-center gap-2">
+                <span className="bg-amber-50 text-amber-900 border border-amber-200/80 px-2.5 py-0.5 rounded-full font-mono text-xs font-semibold flex items-center gap-1">
+                  <Lock className="w-3 h-3 text-amber-600" /> Internal Only
                 </span>
-                <span className="bg-sky-50 text-sky-700 border border-sky-200 px-2 py-0.5 rounded font-bold flex items-center gap-1">
-                  <MessageSquare className="w-3 h-3" /> Balasan Publik
+                <span className="bg-sky-50 text-sky-900 border border-sky-200/80 px-2.5 py-0.5 rounded-full font-mono text-xs font-semibold flex items-center gap-1">
+                  <MessageSquare className="w-3 h-3 text-sky-600" /> Balasan Publik
                 </span>
               </div>
             </div>
@@ -478,46 +479,55 @@ export const TicketDetail = () => {
               {ticket.progress_logs?.map((log, idx) => {
                 const isInternal = log.is_internal !== false && log.is_internal !== 0;
                 return (
-                  <div key={log.id} className="flex gap-4 text-xs text-left">
+                  <div key={log.id} className="flex gap-4 text-xs text-left group">
                     <div className="flex flex-col items-center">
-                      <div className={`w-2.5 h-2.5 rounded-full ${isInternal ? 'bg-amber-500' : 'bg-sky-500'} mt-1 shrink-0`} />
+                      <div className={`w-2.5 h-2.5 rounded-full ${isInternal ? 'bg-amber-500 ring-4 ring-amber-500/10' : 'bg-sky-500 ring-4 ring-sky-500/10'} mt-1 shrink-0`} />
                       {idx !== ticket.progress_logs.length - 1 && (
-                        <div className="w-0.5 flex-1 bg-slate-200 my-1" />
+                        <div className="w-px flex-1 bg-slate-200 my-1" />
                       )}
                     </div>
-                    <div className="flex-1 pb-4">
-                      <div className="flex justify-between items-center mb-1">
-                        <div className="flex items-center gap-2">
-                          <strong className="text-slate-900 font-bold">{log.user?.name}</strong>
+                    <div className="flex-1 pb-4 border-b border-slate-100 group-last:border-none">
+                      <div className="flex flex-wrap justify-between items-start gap-2 mb-1.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <strong className="text-slate-900 font-bold text-xs font-display">{log.user?.name}</strong>
                           {isInternal ? (
-                            <span className="bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.5 rounded text-[9px] font-bold">
+                            <span className="bg-amber-100 text-amber-900 border border-amber-300/80 px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold">
                               🔒 Catatan Internal / Staff Only
                             </span>
                           ) : (
-                            <span className="bg-sky-100 text-sky-800 border border-sky-300 px-1.5 py-0.5 rounded text-[9px] font-bold">
+                            <span className="bg-sky-100 text-sky-900 border border-sky-300/80 px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold">
                               💬 Balasan ke Klien (Publik)
                             </span>
                           )}
                         </div>
-                        <span className="text-[10px] text-slate-400">{new Date(log.created_at).toLocaleString()}</span>
+                        <span className="text-xs font-mono text-slate-500 shrink-0">
+                          {new Date(log.created_at).toLocaleString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
                       </div>
-                      <div className="text-slate-500 text-[11px]">
-                        Role: {log.user?.role?.replace('_', ' ')}
+                      <div className="text-slate-500 text-xs font-mono">
+                        Role: <span className="font-semibold text-slate-700">{log.user?.role?.replace('_', ' ')}</span>
                       </div>
-                      <div className="mt-1 flex items-center gap-1">
+                      <div className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500">
                         <span>Status:</span>
-                        <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${getStatusBadge(log.new_status)}`}>
+                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-mono font-bold ${getStatusBadge(log.new_status)}`}>
                           {log.new_status}
                         </span>
                       </div>
+                      {/* Clean Notes Render (Unboxed Text with Accent Left Line, NO Inner Background Card Slop) */}
                       {log.notes && (
-                        <div className={`mt-2 p-3 rounded-sm text-xs leading-relaxed ${
+                        <p className={`mt-2.5 text-xs leading-relaxed ${
                           isInternal 
-                            ? 'bg-amber-50/80 border border-amber-200/90 text-amber-950 font-mono text-[11px]' 
-                            : 'bg-sky-50/80 border border-sky-200/90 text-slate-800'
+                            ? 'border-l-2 border-amber-400 pl-3.5 py-1 text-slate-800 font-mono' 
+                            : 'border-l-2 border-sky-400 pl-3.5 py-1 text-slate-800 font-sans'
                         }`}>
                           "{log.notes}"
-                        </div>
+                        </p>
                       )}
                     </div>
                   </div>

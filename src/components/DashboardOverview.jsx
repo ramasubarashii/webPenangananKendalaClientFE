@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import axios from 'axios';
 import { Search, Copy, Check } from 'lucide-react';
+import { SkeletonStatCards, SkeletonTableRows } from './SkeletonLoader';
 
 export const DashboardOverview = () => {
   const { user } = useAuth();
@@ -97,7 +98,16 @@ export const DashboardOverview = () => {
   });
 
   if (loading) {
-    return <div className="text-slate-500 text-sm text-left">Memuat data dashboard...</div>;
+    return (
+      <div className="flex-1 flex flex-col gap-6 text-left w-full max-w-6xl mx-auto">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 font-display">{getGreeting()}</h2>
+          <p className="text-xs text-slate-500 mt-1 font-sans">Selamat datang, {user?.name}. Memuat data operasional...</p>
+        </div>
+        <SkeletonStatCards count={4} />
+        <SkeletonTableRows count={5} />
+      </div>
+    );
   }
 
   return (

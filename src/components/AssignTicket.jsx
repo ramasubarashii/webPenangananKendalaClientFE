@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { Copy, Check, ShieldAlert, ArrowRight, User, Calendar } from 'lucide-react';
+import { Copy, Check, ShieldAlert, ArrowRight, User, Calendar, Search } from 'lucide-react';
+import { SkeletonTableRows } from './SkeletonLoader';
 
 export const AssignTicket = () => {
   const [tickets, setTickets] = useState([]);
@@ -48,7 +49,15 @@ export const AssignTicket = () => {
   };
 
   if (loading) {
-    return <div className="text-slate-500 text-sm text-left">Memuat antrean penugasan PM...</div>;
+    return (
+      <div className="flex-1 flex flex-col gap-6 text-left w-full max-w-6xl mx-auto">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 font-display">Resource Allocation Queue (PM)</h2>
+          <p className="text-xs text-slate-500 mt-1 font-sans">Antrean tiket yang dieskalasikan oleh Service Desk, menunggu penunjukan Programmer & estimasi jam pengerjaan</p>
+        </div>
+        <SkeletonTableRows count={5} />
+      </div>
+    );
   }
 
   return (

@@ -10,6 +10,7 @@ import {
   AlertCircle, 
   FileDown
 } from 'lucide-react';
+import { SkeletonTicketDetail } from '../SkeletonLoader';
 
 export const ClientTicketDetail = () => {
   const { ticketId } = useParams();
@@ -50,7 +51,7 @@ export const ClientTicketDetail = () => {
     }
   };
 
-  if (loading) return <div className="text-slate-500 text-sm text-left">Memuat detail tiket...</div>;
+  if (loading) return <SkeletonTicketDetail />;
 
   if (error) {
     return (

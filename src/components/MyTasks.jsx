@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { AlertTriangle } from 'lucide-react';
+import { SkeletonTaskCards } from './SkeletonLoader';
 
 export const MyTasks = () => {
   const [tickets, setTickets] = useState([]);
@@ -25,8 +26,6 @@ export const MyTasks = () => {
   const openTasks = tickets.filter(t => t.status === 'assigned' || t.status === 'in_progress');
   const finishedTasks = tickets.filter(t => t.status === 'resolved' || t.status === 'closed');
 
-
-
   const getStatusBadge = (status) => {
     switch (status) {
       case 'assigned': return 'bg-purple-50 text-purple-700 border border-purple-100';
@@ -38,7 +37,15 @@ export const MyTasks = () => {
   };
 
   if (loading) {
-    return <div className="text-slate-500 text-sm text-left">Loading your task backlog...</div>;
+    return (
+      <div className="flex-1 flex flex-col gap-8 text-left w-full max-w-6xl mx-auto">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 font-display">My Backlog Tasks</h2>
+          <p className="text-xs text-slate-500 mt-1">Tickets assigned to you for analysis, coding, and testing</p>
+        </div>
+        <SkeletonTaskCards count={4} />
+      </div>
+    );
   }
 
   return (
