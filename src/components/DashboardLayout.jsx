@@ -18,16 +18,18 @@ export const DashboardLayout = () => {
 
   const getRoleDisplay = (role) => {
     switch (role) {
-      case 'service_desk': return 'Service Desk';
+      case 'service_desk':    return 'Service Desk';
       case 'project_manager': return 'Project Manager';
-      case 'programmer': return 'Programmer';
-      case 'owner': return 'Company Owner';
-      case 'client': return 'Client / Reporter';
-      default: return role;
+      case 'programmer':      return 'Programmer';
+      case 'owner':           return 'Company Owner';
+      case 'client':          return 'Client / Reporter';
+      default:                return role;
     }
   };
 
   const getNavigationMenu = (role) => {
+    // end:true forces exact-path matching so parent paths
+    // don't show as active when on a child route (e.g. /tickets/tasks)
     const defaultMenu = [
       { name: 'Dashboard Overview', path: '/',        icon: LayoutDashboard, end: true },
       { name: 'All Tickets',        path: '/tickets', icon: ClipboardList,   end: true },
@@ -74,7 +76,7 @@ export const DashboardLayout = () => {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-canvas font-sans text-slate-800">
-      
+
       {/* Sidebar Navigation */}
       <aside className="w-64 bg-white border-r border-slate-200 flex flex-col justify-between shrink-0 shadow-sm text-left">
         <div>
@@ -94,22 +96,22 @@ export const DashboardLayout = () => {
                   key={item.name}
                   to={item.path}
                   end={item.end ?? false}
-                  className={({ isActive }) => 
+                  className={({ isActive }) =>
                     `flex items-center gap-3 px-4 py-2.5 rounded-sm font-bold text-[11px] uppercase tracking-wider transition-all duration-150 border-l-4 outline-none group ${
-                      isActive 
-                        ? 'bg-primary/5 text-primary [border-left-color:var(--color-primary)]' 
+                      isActive
+                        ? 'bg-primary/5 text-primary [border-left-color:var(--color-primary)]'
                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 [border-left-color:transparent]'
                     }`
                   }
                 >
                   {({ isActive }) => (
                     <>
-                      <IconComponent 
+                      <IconComponent
                         className={`w-5 h-5 shrink-0 transition-colors ${
-                          isActive 
-                            ? 'text-primary' 
+                          isActive
+                            ? 'text-primary'
                             : 'text-slate-400 group-hover:text-slate-600'
-                        }`} 
+                        }`}
                       />
                       <span className="truncate">{item.name}</span>
                     </>
@@ -120,7 +122,7 @@ export const DashboardLayout = () => {
           </nav>
         </div>
 
-        {/* Sidebar Footer - Clean, Unboxed User details & Logout Icon */}
+        {/* Sidebar Footer - User info & Logout */}
         <div className="p-4 border-t border-slate-200/70 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0 flex-1">
             <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs font-display shrink-0 border border-slate-200/60">
