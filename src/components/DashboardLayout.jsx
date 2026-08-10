@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import { NotificationBell } from './NotificationBell';
 import {
   LayoutDashboard,
   ClipboardList,
@@ -78,10 +79,11 @@ export const DashboardLayout = () => {
       <aside className="w-64 bg-white border-r border-slate-200 flex flex-col justify-between shrink-0 shadow-sm text-left">
         <div>
           {/* Sidebar Header */}
-          <div className="p-6 border-b border-slate-100 flex items-center gap-2">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-2">
             <span className="text-lg font-extrabold tracking-tight text-slate-900 font-display">
-              <span className="text-primary">Ticketing</span> Flow
+              <span className="text-primary">Ticketing</span>Flow
             </span>
+            <NotificationBell />
           </div>
 
           {/* Navigation Links */}

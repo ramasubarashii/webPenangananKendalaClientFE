@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './AuthContext';
+import { NotificationProvider } from './NotificationContext';
 import { LoginScreen } from './components/LoginScreen';
 import { DashboardLayout } from './components/DashboardLayout';
 import { DashboardOverview } from './components/DashboardOverview';
@@ -69,6 +70,7 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <NotificationProvider>
         <Routes>
           {/* Public Auth Route */}
           <Route
@@ -158,6 +160,7 @@ function App() {
           {/* Fallback Catch All */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </NotificationProvider>
       </BrowserRouter>
     </AuthProvider>
   );

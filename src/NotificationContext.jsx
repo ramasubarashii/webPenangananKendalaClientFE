@@ -1,0 +1,246 @@
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import axios from 'axios';
+import { useAuth } from './AuthContext';
+
+const NotificationContext = createContext(null);
+
+const POLL_INTERVAL_MS = 15000; // 15 seconds
+
+// localStorage keys
+const getSeenKey = (userId) => `ticketing_seen_${userId}`;
+
+/**
+ * Generate a stable unique key for a notification item.
+ * For non-client: "ticket_<id>_<status>"
+ * For client:     "ticket_<id>_log_<logId>" or "ticket_<id>_status_<status>"
+ */
+const makeKey = (type, ticketId, extra) => `${type}_${ticketId}_${extra}`;
+
+/**
+ * Returns human-readable label for a status string.
+ */
+const statusLabel = (status) => {
+  const map = {
+    open: 'Tiket Masuk (Open)',
+    escalated_to_pm: 'Dieskalasikan ke PM',
+    assigned: 'Ditugaskan ke Developer',
+    in_progress: 'Sedang Dikerjakan',
+    resolved: 'Selesai Dikerjakan',
+    closed: 'Ditutup',
+    rejected: 'Ditolak',
+    escalated_to_owner: 'Dieskalasikan ke Owner',
+  };
+  return map[status] || status.replace(/_/g, ' ');
+};
+
+/**
+ * Returns relative time string, e.g. "3 menit lalu", "1 jam lalu"
+ */
+const relativeTime = (dateStr) => {
+  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (diff < 60) return `${diff} detik lalu`;
+  if (diff < 3600) return `${Math.floor(diff / 60)} menit lalu`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} jam lalu`;
+  return `${Math.floor(diff / 86400)} hari lalu`;
+};
+
+export const NotificationProvider = ({ children }) => {
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState([]);
+  const seenKeysRef = useRef(new Set());
+  const intervalRef = useRef(null);
+
+  // Load seen keys from localStorage on mount / user change
+  useEffect(() => {
+    if (!user?.id) {
+      seenKeysRef.current = new Set();
+      setNotifications([]);
+      return;
+    }
+    const stored = localStorage.getItem(getSeenKey(user.id));
+    seenKeysRef.current = stored ? new Set(JSON.parse(stored)) : new Set();
+  }, [user?.id]);
+
+  const persistSeen = useCallback(() => {
+    if (!user?.id) return;
+    localStorage.setItem(
+      getSeenKey(user.id),
+      JSON.stringify([...seenKeysRef.current])
+    );
+  }, [user?.id]);
+
+  /**
+   * Core polling function — fetches tickets and computes new notifications.
+   */
+  const poll = useCallback(async () => {
+    if (!user?.id) return;
+
+    try {
+      const endpoint = user.role === 'client' ? '/client/tickets' : '/tickets';
+      const { data: tickets } = await axios.get(endpoint);
+
+      const newNotifs = [];
+
+      if (user.role === 'service_desk') {
+        // Notify: any ticket with status 'open'
+        tickets.forEach((t) => {
+          const key = makeKey('sd_new', t.id, t.status);
+          if (t.status === 'open' && !seenKeysRef.current.has(key)) {
+            newNotifs.push({
+              id: key,
+              type: 'new_ticket',
+              title: 'Tiket Baru Masuk',
+              body: `${t.ticket_id} — ${t.title}`,
+              ticketPath: `/tickets/${t.ticket_id}`,
+              timestamp: t.created_at,
+              read: false,
+            });
+          }
+        });
+      } else if (user.role === 'project_manager') {
+        // Notify: tickets newly escalated_to_pm
+        tickets.forEach((t) => {
+          const key = makeKey('pm_new', t.id, 'escalated_to_pm');
+          if (t.status === 'escalated_to_pm' && !seenKeysRef.current.has(key)) {
+            newNotifs.push({
+              id: key,
+              type: 'escalated',
+              title: 'Tiket Masuk ke Antrean PM',
+              body: `${t.ticket_id} — ${t.title}`,
+              ticketPath: `/tickets/${t.ticket_id}`,
+              timestamp: t.created_at,
+              read: false,
+            });
+          }
+        });
+      } else if (user.role === 'programmer') {
+        // Notify: tickets assigned to this programmer
+        tickets.forEach((t) => {
+          const isAssigned = t.assignments?.some(
+            (a) => a.programmer_id === user.id || a.programmer?.id === user.id
+          );
+          if (!isAssigned) return;
+          const key = makeKey('prog_assign', t.id, t.status);
+          if (
+            (t.status === 'assigned' || t.status === 'in_progress') &&
+            !seenKeysRef.current.has(key)
+          ) {
+            newNotifs.push({
+              id: key,
+              type: 'assigned',
+              title: 'Tiket Ditugaskan ke Kamu',
+              body: `${t.ticket_id} — ${t.title}`,
+              ticketPath: `/tickets/${t.ticket_id}`,
+              timestamp: t.updated_at || t.created_at,
+              read: false,
+            });
+          }
+        });
+      } else if (user.role === 'owner') {
+        // Notify: tickets escalated_to_owner
+        tickets.forEach((t) => {
+          const key = makeKey('owner_esc', t.id, 'escalated_to_owner');
+          if (t.status === 'escalated_to_owner' && !seenKeysRef.current.has(key)) {
+            newNotifs.push({
+              id: key,
+              type: 'escalated_owner',
+              title: 'Tiket Dieskalasikan ke Owner',
+              body: `${t.ticket_id} — ${t.title}`,
+              ticketPath: `/tickets/${t.ticket_id}`,
+              timestamp: t.updated_at || t.created_at,
+              read: false,
+            });
+          }
+        });
+      } else if (user.role === 'client') {
+        // Notify: any status change on own tickets
+        const statusesToNotify = [
+          'escalated_to_pm',
+          'assigned',
+          'in_progress',
+          'resolved',
+          'closed',
+          'rejected',
+        ];
+        tickets.forEach((t) => {
+          if (!statusesToNotify.includes(t.status)) return;
+          const key = makeKey('client_status', t.id, t.status);
+          if (!seenKeysRef.current.has(key)) {
+            newNotifs.push({
+              id: key,
+              type: 'client_update',
+              title: 'Update Status Tiket',
+              body: `${t.ticket_id} — ${statusLabel(t.status)}`,
+              ticketPath: `/client/tickets/${t.ticket_id}`,
+              timestamp: t.updated_at || t.created_at,
+              read: false,
+            });
+          }
+        });
+      }
+
+      if (newNotifs.length > 0) {
+        setNotifications((prev) => {
+          // Merge: new on top, avoid duplicates by id
+          const existingIds = new Set(prev.map((n) => n.id));
+          const truly_new = newNotifs.filter((n) => !existingIds.has(n.id));
+          return [...truly_new, ...prev];
+        });
+      }
+    } catch (err) {
+      // Silent fail: notifications are non-critical, avoid noisy console errors
+    }
+  }, [user]);
+
+  // Start / stop polling based on user session
+  useEffect(() => {
+    if (!user?.id) {
+      clearInterval(intervalRef.current);
+      return;
+    }
+    // Initial poll immediately on login
+    poll();
+    intervalRef.current = setInterval(poll, POLL_INTERVAL_MS);
+    return () => clearInterval(intervalRef.current);
+  }, [user?.id, poll]);
+
+  const markAllRead = useCallback(() => {
+    setNotifications((prev) => {
+      const updated = prev.map((n) => ({ ...n, read: true }));
+      // Mark all IDs as seen in localStorage
+      updated.forEach((n) => seenKeysRef.current.add(n.id));
+      persistSeen();
+      return updated;
+    });
+  }, [persistSeen]);
+
+  const markOneRead = useCallback(
+    (notifId) => {
+      setNotifications((prev) => {
+        const updated = prev.map((n) =>
+          n.id === notifId ? { ...n, read: true } : n
+        );
+        seenKeysRef.current.add(notifId);
+        persistSeen();
+        return updated;
+      });
+    },
+    [persistSeen]
+  );
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  return (
+    <NotificationContext.Provider
+      value={{ notifications, unreadCount, markAllRead, markOneRead, relativeTime }}
+    >
+      {children}
+    </NotificationContext.Provider>
+  );
+};
+
+export const useNotifications = () => {
+  const ctx = useContext(NotificationContext);
+  if (!ctx) throw new Error('useNotifications must be used within NotificationProvider');
+  return ctx;
+};

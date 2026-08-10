@@ -35,3 +35,38 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* ─── Notification Bell animations ────────────────────────────────────────── */
+@keyframes wiggle {
+  0%   { transform: rotate(0deg); }
+  15%  { transform: rotate(-12deg); }
+  30%  { transform: rotate(12deg); }
+  45%  { transform: rotate(-8deg); }
+  60%  { transform: rotate(8deg); }
+  75%  { transform: rotate(-4deg); }
+  90%  { transform: rotate(4deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slide-in-from-top {
+  from { transform: translateY(-6px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.animate-in {
+  animation-fill-mode: both;
+}
+.fade-in {
+  animation-name: fade-in;
+}
+.slide-in-from-top-2 {
+  animation-name: slide-in-from-top;
+}
+.duration-150 {
+  animation-duration: 150ms;
+}
