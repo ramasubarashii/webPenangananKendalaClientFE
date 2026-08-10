@@ -147,8 +147,8 @@ export const DashboardLayout = () => {
         <Outlet />
       </main>
 
-      {/* ── Notification Bell — Fixed top-right corner ── */}
-      <div className="fixed top-4 right-4 z-50">
+      {/* ── Notification Bell — Fixed top-right ── */}
+      <div className="fixed top-5 right-8 z-50">
         <NotificationBell />
       </div>
     </div>
