@@ -7,7 +7,6 @@ import {
   Clock,
   CheckCircle,
   Inbox,
-  Bell,
   Search,
   ChevronLeft,
   ChevronRight,
@@ -79,13 +78,6 @@ export const ClientDashboard = () => {
     return matchesSearch && matchesStatus;
   });
 
-  // Calculate unread notifications count (tickets with updates/progress logs)
-  const unreadNotificationsCount = tickets.filter(ticket => {
-    const s = ticket.status?.toLowerCase();
-    const hasProgressUpdate = ticket.progress_logs && ticket.progress_logs.length > 1;
-    return hasProgressUpdate && s !== 'closed' && s !== 'resolved';
-  }).length;
-
   // Reset pagination if filters change
   useEffect(() => {
     setCurrentPage(1);
@@ -128,18 +120,10 @@ export const ClientDashboard = () => {
 
   return (
     <div className="flex-1 flex flex-col gap-6 text-left w-full">
-      {/* Header with Bell Icon */}
-      <div className="flex justify-between items-start w-full">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900">Pusat Bantuan Klien</h2>
-          <p className="text-sm text-slate-500">Laporkan kendala, lacak rekam jejak, dan selesaikan kendala teknis Anda.</p>
-        </div>
-        <div className="relative p-2.5 bg-white border border-slate-200 rounded-full cursor-pointer hover:bg-slate-50 transition-colors shadow-sm shrink-0">
-          <Bell className="w-5 h-5 text-slate-600" />
-          {unreadNotificationsCount > 0 && (
-            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
-          )}
-        </div>
+      {/* Page Header */}
+      <div className="flex flex-col gap-1 w-full">
+        <h2 className="text-2xl font-bold tracking-tight text-slate-900">Pusat Bantuan Klien</h2>
+        <p className="text-sm text-slate-500">Laporkan kendala, lacak rekam jejak, dan selesaikan kendala teknis Anda.</p>
       </div>
 
       {/* Grid: Stat Cards & Actions */}
