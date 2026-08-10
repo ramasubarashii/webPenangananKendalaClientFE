@@ -94,10 +94,10 @@ export const DashboardLayout = () => {
                   key={item.name}
                   to={item.path}
                   className={({ isActive }) => 
-                    `flex items-center gap-3 px-4 py-2.5 rounded-sm font-bold text-[11px] uppercase tracking-wider transition-all duration-150 border-l-4 group ${
+                    `flex items-center gap-3 px-4 py-2.5 rounded-sm font-bold text-[11px] uppercase tracking-wider transition-all duration-150 border-l-4 outline-none group ${
                       isActive 
-                        ? 'bg-primary/5 text-primary border-primary' 
-                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-transparent'
+                        ? 'bg-primary/5 text-primary [border-left-color:var(--color-primary)]' 
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 [border-left-color:transparent]'
                     }`
                   }
                 >
