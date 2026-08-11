@@ -100,20 +100,32 @@ export const NotificationProvider = ({ children }) => {
         });
 
         // Notify 2: programmer submitted for review (pending_review)
+        // Key uses the latest pending_review log ID so each re-submission
+        // (after PM rejection) generates a NEW unique key → fresh notification.
         tickets.forEach((t) => {
           const isPmOfTicket = t.assignments?.some(
             (a) => a.pm_id === user.id || a.pm?.id === user.id
           );
           if (!isPmOfTicket) return;
-          const key = makeKey('pm_pending_review', t.id, 'pending_review');
-          if (t.status === 'pending_review' && !seenKeysRef.current.has(key)) {
+          if (t.status !== 'pending_review') return;
+
+          // Find the latest log entry where programmer submitted to pending_review
+          const pendingLogs = (t.progress_logs || []).filter(
+            (l) => l.new_status === 'pending_review'
+          );
+          const latestLog = pendingLogs[pendingLogs.length - 1];
+          if (!latestLog) return;
+
+          // Use log.id so each new submission = new key
+          const key = makeKey('pm_pending_review', t.id, latestLog.id);
+          if (!seenKeysRef.current.has(key)) {
             newNotifs.push({
               id: key,
               type: 'assigned',
-              title: 'Programmer Selesai — Siap Direview',
+              title: 'Programmer Siap Direview',
               body: `${t.ticket_id} — ${t.title}`,
               ticketPath: `/tickets/${t.ticket_id}`,
-              timestamp: t.updated_at || t.created_at,
+              timestamp: latestLog.created_at || t.updated_at,
               read: false,
             });
           }
