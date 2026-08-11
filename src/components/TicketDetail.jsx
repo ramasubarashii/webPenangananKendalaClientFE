@@ -310,6 +310,7 @@ export const TicketDetail = () => {
       case 'escalated_to_owner': return 'bg-rose-50 text-rose-700 border border-rose-100';
       case 'assigned': return 'bg-purple-50 text-purple-700 border border-purple-100';
       case 'in_progress': case 'in progress': return 'bg-amber-50 text-amber-700 border border-amber-100';
+      case 'pending_review': return 'bg-orange-50 text-orange-700 border border-orange-200';
       case 'resolved': return 'bg-emerald-50 text-emerald-700 border border-emerald-100';
       case 'closed': return 'bg-slate-100 text-slate-600 border border-slate-200';
       case 'rejected': return 'bg-red-50 text-red-700 border border-red-100';
@@ -673,8 +674,8 @@ export const TicketDetail = () => {
             </div>
           )}
 
-          {/* PM Work Review Action (OK vs TIDAK OK) */}
-          {user?.role === 'project_manager' && (ticket.status === 'resolved' || ticket.status === 'in_progress' || ticket.status === 'assigned') && (
+          {/* PM Work Review Action (OK vs TIDAK OK) — Only shown when status is pending_review */}
+          {user?.role === 'project_manager' && ticket.status === 'pending_review' && (
             <div className="bg-white border border-indigo-200 bg-indigo-50/20 rounded-lg p-5 flex flex-col gap-4 shadow-sm">
               <div className="flex justify-between items-center">
                 <h3 className="text-xs font-bold text-indigo-900 uppercase tracking-wider">Review Hasil Pengerjaan PM</h3>
@@ -833,17 +834,30 @@ export const TicketDetail = () => {
                   className="w-full py-2 bg-[#48626e] hover:bg-[#304a55] text-white font-bold text-xs rounded-sm transition-colors cursor-pointer"
                   disabled={submitting}
                 >
-                  {submitting ? 'Updating...' : 'Start Work (In Progress)'}
+                  {submitting ? 'Updating...' : 'Mulai Kerjakan (In Progress)'}
                 </button>
               ) : (
                 <button
-                  onClick={() => handleStatusUpdate('resolved')}
-                  className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-sm transition-colors cursor-pointer"
+                  onClick={() => handleStatusUpdate('pending_review')}
+                  className="w-full py-2 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs rounded-sm transition-colors cursor-pointer"
                   disabled={submitting}
                 >
-                  {submitting ? 'Resolving...' : 'Mark as Resolved (Done)'}
+                  {submitting ? 'Submitting...' : '✓ Selesai — Ajukan ke PM untuk Review'}
                 </button>
               )}
+            </div>
+          )}
+
+          {/* Programmer — Pending Review Info Banner (ticket is awaiting PM) */}
+          {user?.role === 'programmer' && isAssignedProgrammer && ticket.status === 'pending_review' && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-5 flex flex-col gap-2">
+              <h3 className="text-xs font-bold text-orange-800 uppercase tracking-wider flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5" />
+                Menunggu Review PM
+              </h3>
+              <p className="text-xs text-orange-700 leading-normal">
+                Pengerjaan kamu sudah diajukan. PM sedang mereview hasilnya. Kamu akan mendapat notifikasi jika disetujui atau perlu diperbaiki.
+              </p>
             </div>
           )}
 
@@ -889,10 +903,10 @@ export const TicketDetail = () => {
           )}
 
           {/* Empty Actions Block */}
-          {(!user || 
-            (user.role === 'programmer' && (!isAssignedProgrammer || (ticket.status !== 'assigned' && ticket.status !== 'in_progress'))) ||
+          {(!user ||
+            (user.role === 'programmer' && (!isAssignedProgrammer || !['assigned','in_progress','pending_review'].includes(ticket.status))) ||
             (user.role === 'service_desk' && ticket.status !== 'resolved' && ticket.status !== 'open') ||
-            (user.role === 'project_manager' && ticket.status !== 'escalated_to_pm') ||
+            (user.role === 'project_manager' && ticket.status !== 'escalated_to_pm' && ticket.status !== 'pending_review') ||
             (user.role === 'owner') ||
             (ticket.status === 'closed' || ticket.status === 'rejected')
           ) && (

@@ -25,6 +25,7 @@ const statusLabel = (status) => {
     escalated_to_pm: 'Dieskalasikan ke PM',
     assigned: 'Ditugaskan ke Developer',
     in_progress: 'Sedang Dikerjakan',
+    pending_review: 'Menunggu Review PM',
     resolved: 'Selesai Dikerjakan',
     closed: 'Ditutup',
     rejected: 'Ditolak',
@@ -81,24 +82,8 @@ export const NotificationProvider = ({ children }) => {
 
       const newNotifs = [];
 
-      if (user.role === 'service_desk') {
-        // Notify: any ticket with status 'open'
-        tickets.forEach((t) => {
-          const key = makeKey('sd_new', t.id, t.status);
-          if (t.status === 'open' && !seenKeysRef.current.has(key)) {
-            newNotifs.push({
-              id: key,
-              type: 'new_ticket',
-              title: 'Tiket Baru Masuk',
-              body: `${t.ticket_id} — ${t.title}`,
-              ticketPath: `/tickets/${t.ticket_id}`,
-              timestamp: t.created_at,
-              read: false,
-            });
-          }
-        });
-      } else if (user.role === 'project_manager') {
-        // Notify: tickets newly escalated_to_pm
+      if (user.role === 'project_manager') {
+        // Notify 1: tickets newly escalated_to_pm
         tickets.forEach((t) => {
           const key = makeKey('pm_new', t.id, 'escalated_to_pm');
           if (t.status === 'escalated_to_pm' && !seenKeysRef.current.has(key)) {
@@ -113,8 +98,28 @@ export const NotificationProvider = ({ children }) => {
             });
           }
         });
+
+        // Notify 2: programmer submitted for review (pending_review)
+        tickets.forEach((t) => {
+          const isPmOfTicket = t.assignments?.some(
+            (a) => a.pm_id === user.id || a.pm?.id === user.id
+          );
+          if (!isPmOfTicket) return;
+          const key = makeKey('pm_pending_review', t.id, 'pending_review');
+          if (t.status === 'pending_review' && !seenKeysRef.current.has(key)) {
+            newNotifs.push({
+              id: key,
+              type: 'assigned',
+              title: 'Programmer Selesai — Siap Direview',
+              body: `${t.ticket_id} — ${t.title}`,
+              ticketPath: `/tickets/${t.ticket_id}`,
+              timestamp: t.updated_at || t.created_at,
+              read: false,
+            });
+          }
+        });
       } else if (user.role === 'programmer') {
-        // Notify: tickets assigned to this programmer
+        // Notify 1: tickets assigned to this programmer
         tickets.forEach((t) => {
           const isAssigned = t.assignments?.some(
             (a) => a.programmer_id === user.id || a.programmer?.id === user.id
@@ -136,6 +141,32 @@ export const NotificationProvider = ({ children }) => {
             });
           }
         });
+
+        // Notify 2: PM rejected this programmer's work [PM_REVIEW_TIDAK_OK] marker in logs
+        tickets.forEach((t) => {
+          const isAssigned = t.assignments?.some(
+            (a) => a.programmer_id === user.id || a.programmer?.id === user.id
+          );
+          if (!isAssigned) return;
+          // Find latest log with rejection marker
+          const rejectionLogs = (t.progress_logs || []).filter(
+            (l) => l.notes && l.notes.includes('[PM_REVIEW_TIDAK_OK]')
+          );
+          rejectionLogs.forEach((log) => {
+            const key = makeKey('prog_rejected', t.id, log.id);
+            if (!seenKeysRef.current.has(key)) {
+              newNotifs.push({
+                id: key,
+                type: 'escalated_owner', // red icon for rejection
+                title: 'Pengerjaan Dikembalikan PM',
+                body: `${t.ticket_id} — Perlu diperbaiki. Cek log tiket.`,
+                ticketPath: `/tickets/${t.ticket_id}`,
+                timestamp: log.created_at,
+                read: false,
+              });
+            }
+          });
+        });
       } else if (user.role === 'owner') {
         // Notify: tickets escalated_to_owner
         tickets.forEach((t) => {
@@ -146,6 +177,38 @@ export const NotificationProvider = ({ children }) => {
               type: 'escalated_owner',
               title: 'Tiket Dieskalasikan ke Owner',
               body: `${t.ticket_id} — ${t.title}`,
+              ticketPath: `/tickets/${t.ticket_id}`,
+              timestamp: t.updated_at || t.created_at,
+              read: false,
+            });
+          }
+        });
+      } else if (user.role === 'service_desk') {
+        // SD Notify 1: any ticket with status 'open'
+        tickets.forEach((t) => {
+          const key = makeKey('sd_new', t.id, t.status);
+          if (t.status === 'open' && !seenKeysRef.current.has(key)) {
+            newNotifs.push({
+              id: key,
+              type: 'new_ticket',
+              title: 'Tiket Baru Masuk',
+              body: `${t.ticket_id} — ${t.title}`,
+              ticketPath: `/tickets/${t.ticket_id}`,
+              timestamp: t.created_at,
+              read: false,
+            });
+          }
+        });
+
+        // SD Notify 2: ticket resolved (PM approved, awaiting SD close)
+        tickets.forEach((t) => {
+          const key = makeKey('sd_resolved', t.id, 'resolved');
+          if (t.status === 'resolved' && !seenKeysRef.current.has(key)) {
+            newNotifs.push({
+              id: key,
+              type: 'client_update',
+              title: 'Tiket Siap Diverifikasi',
+              body: `${t.ticket_id} — PM telah menyetujui pengerjaan programmer.`,
               ticketPath: `/tickets/${t.ticket_id}`,
               timestamp: t.updated_at || t.created_at,
               read: false,

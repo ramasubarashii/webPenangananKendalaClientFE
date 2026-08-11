@@ -23,13 +23,14 @@ export const MyTasks = () => {
     fetchTickets();
   }, []);
 
-  const openTasks = tickets.filter(t => t.status === 'assigned' || t.status === 'in_progress');
+  const openTasks = tickets.filter(t => ['assigned', 'in_progress', 'pending_review'].includes(t.status));
   const finishedTasks = tickets.filter(t => t.status === 'resolved' || t.status === 'closed');
 
   const getStatusBadge = (status) => {
     switch (status) {
       case 'assigned': return 'bg-purple-50 text-purple-700 border border-purple-100';
       case 'in_progress': return 'bg-amber-50 text-amber-700 border border-amber-100';
+      case 'pending_review': return 'bg-orange-50 text-orange-700 border border-orange-200';
       case 'resolved': return 'bg-emerald-50 text-emerald-700 border border-emerald-100';
       case 'closed': return 'bg-slate-100 text-slate-600 border border-slate-200';
       default: return 'bg-slate-50 text-slate-700 border border-slate-100';
@@ -88,15 +89,23 @@ export const MyTasks = () => {
                     <p className="text-xs text-slate-600 line-clamp-2 mb-2 leading-normal">{ticket.description}</p>
                     
                     {/* PM Feedback Banner if returned TIDAK OK */}
-                    {ticket.progress_logs?.some(l => l.notes?.includes('TIDAK OK')) && (
+                    {ticket.progress_logs?.some(l => l.notes?.includes('[PM_REVIEW_TIDAK_OK]')) && (
                       <div className="bg-red-50 border border-red-200 text-red-800 p-2.5 rounded-sm text-xs mb-3 font-medium flex flex-col gap-0.5 text-left">
                         <span className="font-bold flex items-center gap-1.5 text-red-700">
                           <AlertTriangle className="w-3.5 h-3.5 text-red-600 shrink-0" />
                           <span>Perlu Perbaikan (PM Review TIDAK OK)</span>
                         </span>
                         <span className="text-[11px] italic text-red-900 leading-normal">
-                          "{ticket.progress_logs.find(l => l.notes?.includes('TIDAK OK'))?.notes}"
+                          "{ticket.progress_logs.find(l => l.notes?.includes('[PM_REVIEW_TIDAK_OK]'))?.notes?.replace('[PM_REVIEW_TIDAK_OK] ', '')}"
                         </span>
+                      </div>
+                    )}
+
+                    {/* Pending Review waiting banner */}
+                    {ticket.status === 'pending_review' && !ticket.progress_logs?.some(l => l.notes?.includes('[PM_REVIEW_TIDAK_OK]')) && (
+                      <div className="bg-orange-50 border border-orange-200 text-orange-800 p-2.5 rounded-sm text-xs mb-3 font-medium flex items-center gap-1.5">
+                        <AlertTriangle className="w-3.5 h-3.5 text-orange-500 shrink-0" />
+                        <span>Menunggu persetujuan PM — pengerjaan sudah diajukan.</span>
                       </div>
                     )}
                   </div>
