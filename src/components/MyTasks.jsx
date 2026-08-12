@@ -110,7 +110,7 @@ export const MyTasks = () => {
                     )}
                   </div>
                   <div className="flex justify-between items-center text-xs border-t border-slate-100 pt-3.5 mt-2 text-slate-500">
-                    <span>Effort: <strong className="font-semibold text-slate-700">{ticket.assignments?.[0]?.estimated_hours || 0} hrs</strong></span>
+                    <span>Estimasi: <strong className="font-semibold text-slate-700">{ticket.assignments?.[0]?.estimated_hours || 0} {ticket.assignments?.[0]?.estimated_unit === 'days' ? 'Hari' : 'Jam'}</strong></span>
                     <Link
                       to={`/tickets/${ticket.ticket_id || ticket.id}`}
                       className="py-1 px-3.5 border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-[11px] rounded-sm transition-colors cursor-pointer"
@@ -155,7 +155,7 @@ export const MyTasks = () => {
                     <p className="text-xs text-slate-500 line-clamp-2 mb-3.5 leading-normal">{ticket.description}</p>
                   </div>
                   <div className="flex justify-between items-center text-xs border-t border-slate-100 pt-3.5 mt-2 text-slate-500">
-                    <span>Effort: <strong className="font-semibold text-slate-700">{ticket.assignments?.[0]?.estimated_hours || 0} hrs</strong></span>
+                    <span>Estimasi: <strong className="font-semibold text-slate-700">{ticket.assignments?.[0]?.estimated_hours || 0} {ticket.assignments?.[0]?.estimated_unit === 'days' ? 'Hari' : 'Jam'}</strong></span>
                     <Link
                       to={`/tickets/${ticket.ticket_id || ticket.id}`}
                       className="py-1 px-3 text-slate-500 hover:text-primary font-bold text-[11px] hover:underline"

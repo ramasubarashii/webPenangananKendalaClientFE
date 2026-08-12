@@ -663,7 +663,9 @@ export const TicketDetail = () => {
                   <span className="text-slate-400 block mb-0.5 flex items-center gap-1">
                     <Clock className="w-3 h-3 text-slate-400" /> Estimated Effort
                   </span>
-                  <span className="font-bold text-slate-800">{currentAssignment.estimated_hours} Hours</span>
+                  <span className="font-bold text-slate-800">
+                    {currentAssignment.estimated_hours} {currentAssignment.estimated_unit === 'days' ? 'Hari' : 'Jam'}
+                  </span>
                 </div>
               </div>
             </div>

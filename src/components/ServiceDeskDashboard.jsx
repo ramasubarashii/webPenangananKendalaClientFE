@@ -177,7 +177,7 @@ export const ServiceDeskDashboard = ({
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '0.85rem' }}>
                   <div><strong>PM:</strong> {selectedTicket.assignments[0].pm?.name}</div>
                   <div><strong>Programmer:</strong> {selectedTicket.assignments[0].programmer?.name}</div>
-                  <div><strong>Estimated Time:</strong> {selectedTicket.assignments[0].estimated_hours} Hours</div>
+                  <div><strong>Estimated Time:</strong> {selectedTicket.assignments[0].estimated_hours} {selectedTicket.assignments[0].estimated_unit === 'days' ? 'Hari' : 'Jam'}</div>
                 </div>
               </div>
             )}

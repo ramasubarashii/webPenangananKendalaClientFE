@@ -126,7 +126,7 @@ export const ProgrammerDashboard = ({
                 <h4 style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '10px' }}>Assignment & Estimation Details</h4>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '0.85rem' }}>
                   <div><strong>Assigner (PM):</strong> {selectedTicket.assignments[0].pm?.name}</div>
-                  <div><strong>Assigned Time:</strong> {selectedTicket.assignments[0].estimated_hours} Hours</div>
+                  <div><strong>Assigned Time:</strong> {selectedTicket.assignments[0].estimated_hours} {selectedTicket.assignments[0].estimated_unit === 'days' ? 'Hari' : 'Jam'}</div>
                 </div>
               </div>
             )}

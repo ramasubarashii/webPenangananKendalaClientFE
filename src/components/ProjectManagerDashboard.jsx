@@ -10,6 +10,7 @@ export const ProjectManagerDashboard = ({
   const [programmers, setProgrammers] = useState([]);
   const [selectedProgrammerId, setSelectedProgrammerId] = useState('');
   const [estimatedHours, setEstimatedHours] = useState('');
+  const [estimatedUnit, setEstimatedUnit] = useState('hours');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -34,10 +35,12 @@ export const ProjectManagerDashboard = ({
     try {
       await axios.post(`/tickets/${selectedTicket.id}/assign`, {
         programmer_id: selectedProgrammerId,
-        estimated_hours: parseFloat(estimatedHours)
+        estimated_hours: parseFloat(estimatedHours),
+        estimated_unit: estimatedUnit
       });
       setSelectedProgrammerId('');
       setEstimatedHours('');
+      setEstimatedUnit('hours');
       await fetchTickets();
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to assign resource');
@@ -158,17 +161,49 @@ export const ProjectManagerDashboard = ({
                   </div>
 
                   <div className="form-group" style={{ marginBottom: '20px' }}>
-                    <label className="form-label">Estimated Hours (Time allocation)</label>
-                    <input
-                      type="number"
-                      step="0.5"
-                      min="0.5"
-                      className="form-control"
-                      placeholder="e.g. 12.5"
-                      value={estimatedHours}
-                      onChange={(e) => setEstimatedHours(e.target.value)}
-                      required
-                    />
+                    <label className="form-label">Estimasi Pengerjaan</label>
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={() => { setEstimatedUnit('hours'); setEstimatedHours(''); }}
+                        className={`btn ${estimatedUnit === 'hours' ? 'btn-primary' : 'btn-outline'}`}
+                        style={{ flex: 1, padding: '4px 8px', fontSize: '0.8rem' }}
+                      >
+                        Jam
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setEstimatedUnit('days'); setEstimatedHours(''); }}
+                        className={`btn ${estimatedUnit === 'days' ? 'btn-primary' : 'btn-outline'}`}
+                        style={{ flex: 1, padding: '4px 8px', fontSize: '0.8rem' }}
+                      >
+                        Hari
+                      </button>
+                    </div>
+                    {estimatedUnit === 'hours' ? (
+                      <input
+                        type="number"
+                        step="0.5"
+                        min="0.5"
+                        className="form-control"
+                        placeholder="contoh: 8.0 jam"
+                        value={estimatedHours}
+                        onChange={(e) => setEstimatedHours(e.target.value)}
+                        required
+                      />
+                    ) : (
+                      <select
+                        className="form-control"
+                        value={estimatedHours}
+                        onChange={(e) => setEstimatedHours(e.target.value)}
+                        required
+                      >
+                        <option value="">-- Pilih estimasi hari --</option>
+                        {[1, 2, 3, 5, 7, 14, 21, 30].map(d => (
+                          <option key={d} value={d}>{d} Hari</option>
+                        ))}
+                      </select>
+                    )}
                   </div>
 
                   <button
@@ -188,7 +223,7 @@ export const ProjectManagerDashboard = ({
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '0.85rem' }}>
                     <div><strong>Project Manager:</strong> {selectedTicket.assignments[0].pm?.name}</div>
                     <div><strong>Programmer Assigned:</strong> {selectedTicket.assignments[0].programmer?.name}</div>
-                    <div><strong>Estimated Time:</strong> {selectedTicket.assignments[0].estimated_hours} Hours</div>
+                    <div><strong>Estimated Time:</strong> {selectedTicket.assignments[0].estimated_hours} {selectedTicket.assignments[0].estimated_unit === 'days' ? 'Hari' : 'Jam'}</div>
                   </div>
                 </div>
               )
