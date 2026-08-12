@@ -21,7 +21,8 @@ const makeKey = (type, ticketId, extra) => `${type}_${ticketId}_${extra}`;
  */
 const statusLabel = (status) => {
   const map = {
-    open: 'Tiket Masuk (Open)',
+    pending_confirmation: 'Menunggu Konfirmasi SD',
+    open: 'Tiket Dikonfirmasi (Open)',
     escalated_to_pm: 'Dieskalasikan ke PM',
     assigned: 'Ditugaskan ke Developer',
     in_progress: 'Sedang Dikerjakan',
@@ -196,14 +197,14 @@ export const NotificationProvider = ({ children }) => {
           }
         });
       } else if (user.role === 'service_desk') {
-        // SD Notify 1: any ticket with status 'open'
+        // SD Notify 1: new ticket from client (pending_confirmation)
         tickets.forEach((t) => {
-          const key = makeKey('sd_new', t.id, t.status);
-          if (t.status === 'open' && !seenKeysRef.current.has(key)) {
+          const key = makeKey('sd_new', t.id, 'pending_confirmation');
+          if (t.status === 'pending_confirmation' && !seenKeysRef.current.has(key)) {
             newNotifs.push({
               id: key,
               type: 'new_ticket',
-              title: 'Tiket Baru Masuk',
+              title: 'Tiket Baru — Perlu Konfirmasi',
               body: `${t.ticket_id} — ${t.title}`,
               ticketPath: `/tickets/${t.ticket_id}`,
               timestamp: t.created_at,
@@ -230,12 +231,13 @@ export const NotificationProvider = ({ children }) => {
       } else if (user.role === 'client') {
         // Notify: any status change on own tickets
         const statusesToNotify = [
+          'open',           // SD confirmed ticket
           'escalated_to_pm',
           'assigned',
           'in_progress',
           'resolved',
           'closed',
-          'rejected',
+          'rejected',       // SD rejected ticket
         ];
         tickets.forEach((t) => {
           if (!statusesToNotify.includes(t.status)) return;

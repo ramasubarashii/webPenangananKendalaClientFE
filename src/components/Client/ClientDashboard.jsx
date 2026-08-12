@@ -47,7 +47,7 @@ export const ClientDashboard = () => {
 
   const activeTickets = tickets.filter(t => {
     const s = t.status?.toLowerCase();
-    return s === 'open' || s === 'assigned' || s === 'in_progress' || s === 'in progress';
+    return s === 'pending_confirmation' || s === 'open' || s === 'assigned' || s === 'in_progress' || s === 'in progress';
   }).length;
 
   const resolvedTickets = tickets.filter(t => {
@@ -99,6 +99,7 @@ export const ClientDashboard = () => {
   const getStatusBadge = (status) => {
     const s = status?.toLowerCase();
     switch (s) {
+      case 'pending_confirmation': return 'bg-slate-100 text-slate-600 border border-slate-300';
       case 'open': return 'bg-sky-50 text-sky-700 border border-sky-100';
       case 'assigned': return 'bg-purple-50 text-purple-700 border border-purple-100';
       case 'in_progress': case 'in progress': return 'bg-amber-50 text-amber-700 border border-amber-100';
@@ -107,6 +108,21 @@ export const ClientDashboard = () => {
       case 'rejected': return 'bg-red-50 text-red-700 border border-red-100';
       default: return 'bg-slate-50 text-slate-700 border border-slate-100';
     }
+  };
+
+  const getStatusLabel = (status) => {
+    const map = {
+      pending_confirmation: 'Menunggu Konfirmasi',
+      open: 'Terbuka',
+      assigned: 'Ditugaskan',
+      in_progress: 'Sedang Dikerjakan',
+      'in progress': 'Sedang Dikerjakan',
+      pending_review: 'Menunggu Review',
+      resolved: 'Selesai',
+      closed: 'Ditutup',
+      rejected: 'Ditolak',
+    };
+    return map[status?.toLowerCase()] || status?.replace(/_/g, ' ');
   };
 
   if (loading) {
@@ -275,7 +291,7 @@ export const ClientDashboard = () => {
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${getStatusBadge(ticket.status)}`}>
-                        {ticket.status.replace('_', ' ')}
+                        {getStatusLabel(ticket.status)}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-500">

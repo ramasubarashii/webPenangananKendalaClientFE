@@ -41,6 +41,7 @@ export const ClientTicketDetail = () => {
   const getStatusBadge = (status) => {
     const s = status?.toLowerCase();
     switch (s) {
+      case 'pending_confirmation': return 'bg-slate-100 text-slate-600 border border-slate-300';
       case 'open': return 'bg-sky-50 text-sky-700 border border-sky-100';
       case 'assigned': return 'bg-purple-50 text-purple-700 border border-purple-100';
       case 'in_progress': case 'in progress': return 'bg-amber-50 text-amber-700 border border-amber-100';
@@ -49,6 +50,20 @@ export const ClientTicketDetail = () => {
       case 'rejected': return 'bg-red-50 text-red-700 border border-red-100';
       default: return 'bg-slate-50 text-slate-700 border border-slate-100';
     }
+  };
+
+  const getStatusLabel = (status) => {
+    const map = {
+      pending_confirmation: 'Menunggu Konfirmasi',
+      open: 'Terbuka (Dikonfirmasi)',
+      assigned: 'Ditugaskan ke Developer',
+      in_progress: 'Sedang Dikerjakan',
+      pending_review: 'Sedang Direview',
+      resolved: 'Selesai',
+      closed: 'Ditutup',
+      rejected: 'Ditolak',
+    };
+    return map[status?.toLowerCase()] || status?.replace(/_/g, ' ');
   };
 
   if (loading) return <SkeletonTicketDetail />;
@@ -106,7 +121,7 @@ export const ClientTicketDetail = () => {
           </p>
         </div>
         <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(ticket.status)}`}>
-          {ticket.status.replace('_', ' ')}
+          {getStatusLabel(ticket.status)}
         </span>
       </div>
 
@@ -116,6 +131,19 @@ export const ClientTicketDetail = () => {
         {/* Left Side: Description & Progress timeline */}
         <div className="md:col-span-2 flex flex-col gap-6">
           
+        {/* Pending Confirmation Info Banner */}
+          {ticket.status === 'pending_confirmation' && (
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 flex items-start gap-3 shadow-sm">
+              <Clock className="w-5 h-5 text-slate-400 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs font-bold text-slate-700">Tiket Menunggu Konfirmasi</p>
+                <p className="text-xs text-slate-500 mt-0.5 leading-normal">
+                  Tiket bantuan kamu sudah diterima dan sedang ditinjau oleh tim Service Desk. Kamu akan mendapat notifikasi setelah dikonfirmasi atau jika ada masalah.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Issue Details */}
           <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Deskripsi Masalah</h3>

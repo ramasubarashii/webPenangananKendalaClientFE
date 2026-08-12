@@ -43,6 +43,15 @@ export const TicketDetail = () => {
   const [programmers, setProgrammers] = useState([]);
   const [selectedProgrammerId, setSelectedProgrammerId] = useState('');
   const [estimatedHours, setEstimatedHours] = useState('');
+  const [estimatedUnit, setEstimatedUnit] = useState('hours'); // 'hours' | 'days'
+  const [assignPriority, setAssignPriority] = useState('');
+
+  // PM Priority Update States (can be done anytime while not closed)
+  const [priorityUpdateValue, setPriorityUpdateValue] = useState('');
+  const [priorityUpdateNotes, setPriorityUpdateNotes] = useState('');
+
+  // SD Confirmation States
+  const [confirmNotes, setConfirmNotes] = useState('');
 
   // Form action status states
   const [actionError, setActionError] = useState('');
@@ -107,6 +116,52 @@ export const TicketDetail = () => {
       await fetchTicket();
     } catch (err) {
       setActionError(err.response?.data?.message || 'Gagal menyerahkan tiket ke Owner.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleConfirmTicket = async (action) => {
+    setActionError('');
+    setActionSuccess('');
+    if (!confirmNotes.trim()) {
+      setActionError('Harap berikan catatan untuk ' + (action === 'confirm' ? 'konfirmasi' : 'penolakan') + ' tiket.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await axios.post(`/tickets/${ticket.ticket_id}/confirm`, {
+        action,
+        notes: confirmNotes,
+      });
+      setConfirmNotes('');
+      setActionSuccess(res.data.message);
+      await fetchTicket();
+    } catch (err) {
+      setActionError(err.response?.data?.message || 'Gagal memproses konfirmasi tiket.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handlePriorityUpdate = async () => {
+    setActionError('');
+    setActionSuccess('');
+    if (!priorityUpdateValue) {
+      setActionError('Pilih prioritas yang akan diset.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await axios.post(`/tickets/${ticket.ticket_id}/priority`, {
+        priority: priorityUpdateValue,
+        notes: priorityUpdateNotes,
+      });
+      setPriorityUpdateNotes('');
+      setActionSuccess(res.data.message);
+      await fetchTicket();
+    } catch (err) {
+      setActionError(err.response?.data?.message || 'Gagal memperbarui prioritas.');
     } finally {
       setSubmitting(false);
     }
@@ -184,17 +239,21 @@ export const TicketDetail = () => {
     setActionSuccess('');
 
     if (!selectedProgrammerId || !estimatedHours) {
-      setActionError('Pilih programmer dan isi estimasi jam terlebih dahulu.');
+      setActionError('Pilih programmer dan isi estimasi pengerjaan terlebih dahulu.');
       return;
     }
     setSubmitting(true);
     try {
       await axios.post(`/tickets/${ticket.ticket_id}/assign`, {
         programmer_id: selectedProgrammerId,
-        estimated_hours: parseFloat(estimatedHours)
+        estimated_hours: parseFloat(estimatedHours),
+        estimated_unit: estimatedUnit,
+        ...(assignPriority ? { priority: assignPriority } : {}),
       });
       setSelectedProgrammerId('');
       setEstimatedHours('');
+      setEstimatedUnit('hours');
+      setAssignPriority('');
       setActionSuccess('Berhasil menugaskan programmer.');
       await fetchTicket();
     } catch (err) {
@@ -310,6 +369,7 @@ export const TicketDetail = () => {
       case 'escalated_to_owner': return 'bg-rose-50 text-rose-700 border border-rose-100';
       case 'assigned': return 'bg-purple-50 text-purple-700 border border-purple-100';
       case 'in_progress': case 'in progress': return 'bg-amber-50 text-amber-700 border border-amber-100';
+      case 'pending_confirmation': return 'bg-slate-100 text-slate-600 border border-slate-200';
       case 'pending_review': return 'bg-orange-50 text-orange-700 border border-orange-200';
       case 'resolved': return 'bg-emerald-50 text-emerald-700 border border-emerald-100';
       case 'closed': return 'bg-slate-100 text-slate-600 border border-slate-200';
@@ -634,20 +694,77 @@ export const TicketDetail = () => {
                   </select>
                 </div>
 
+                {/* Priority Override */}
                 <div>
                   <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1">
-                    Estimated Hours
+                    Priority <span className="text-slate-400 font-normal normal-case">(opsional, override dari SD)</span>
                   </label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    min="0.5"
-                    className="w-full text-xs border border-slate-300 rounded-sm px-3 py-2 focus:outline-none focus:border-primary"
-                    placeholder="e.g. 8.0"
-                    value={estimatedHours}
-                    onChange={(e) => setEstimatedHours(e.target.value)}
-                    required
-                  />
+                  <select
+                    className="w-full text-xs border border-slate-300 rounded-sm px-3 py-2 bg-white focus:outline-none focus:border-primary"
+                    value={assignPriority}
+                    onChange={(e) => setAssignPriority(e.target.value)}
+                  >
+                    <option value="">-- Tidak Diubah --</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+
+                {/* Estimated time with unit toggle */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1">
+                    Estimasi Pengerjaan
+                  </label>
+                  {/* Unit Toggle */}
+                  <div className="flex gap-1 mb-2">
+                    <button
+                      type="button"
+                      onClick={() => { setEstimatedUnit('hours'); setEstimatedHours(''); }}
+                      className={`flex-1 py-1 text-xs font-bold rounded-sm border transition-colors cursor-pointer ${
+                        estimatedUnit === 'hours'
+                          ? 'bg-primary text-white border-primary'
+                          : 'bg-white text-slate-600 border-slate-300 hover:border-primary'
+                      }`}
+                    >
+                      Jam
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setEstimatedUnit('days'); setEstimatedHours(''); }}
+                      className={`flex-1 py-1 text-xs font-bold rounded-sm border transition-colors cursor-pointer ${
+                        estimatedUnit === 'days'
+                          ? 'bg-primary text-white border-primary'
+                          : 'bg-white text-slate-600 border-slate-300 hover:border-primary'
+                      }`}
+                    >
+                      Hari
+                    </button>
+                  </div>
+                  {estimatedUnit === 'hours' ? (
+                    <input
+                      type="number"
+                      step="0.5"
+                      min="0.5"
+                      className="w-full text-xs border border-slate-300 rounded-sm px-3 py-2 focus:outline-none focus:border-primary"
+                      placeholder="contoh: 8.0 jam"
+                      value={estimatedHours}
+                      onChange={(e) => setEstimatedHours(e.target.value)}
+                      required
+                    />
+                  ) : (
+                    <select
+                      className="w-full text-xs border border-slate-300 rounded-sm px-3 py-2 bg-white focus:outline-none focus:border-primary"
+                      value={estimatedHours}
+                      onChange={(e) => setEstimatedHours(e.target.value)}
+                      required
+                    >
+                      <option value="">-- Pilih estimasi hari --</option>
+                      {[1,2,3,5,7,14,21,30].map(d => (
+                        <option key={d} value={d}>{d} Hari</option>
+                      ))}
+                    </select>
+                  )}
                 </div>
 
                 <button
@@ -671,6 +788,41 @@ export const TicketDetail = () => {
                   <span>Eskalasikan Langsung ke Owner</span>
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* PM Update Priority — available anytime while not closed/rejected */}
+          {user?.role === 'project_manager' && !['closed','rejected','pending_confirmation'].includes(ticket.status) && (
+            <div className="bg-white border border-slate-200 rounded-lg p-5 flex flex-col gap-3">
+              <h3 className="text-xs font-bold text-slate-600 uppercase tracking-wider">Update Prioritas (PM)</h3>
+              <div className="flex gap-2">
+                <select
+                  className="flex-1 text-xs border border-slate-300 rounded-sm px-3 py-2 bg-white focus:outline-none focus:border-primary"
+                  value={priorityUpdateValue}
+                  onChange={(e) => setPriorityUpdateValue(e.target.value)}
+                >
+                  <option value="">-- Pilih Prioritas --</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="belum_ditentukan">Belum Ditentukan</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={handlePriorityUpdate}
+                  disabled={submitting || !priorityUpdateValue}
+                  className="px-4 py-2 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-sm transition-colors cursor-pointer disabled:opacity-40"
+                >
+                  Update
+                </button>
+              </div>
+              <input
+                type="text"
+                className="w-full text-xs border border-slate-300 rounded-sm px-3 py-2 focus:outline-none focus:border-primary"
+                placeholder="Catatan alasan perubahan prioritas (opsional)..."
+                value={priorityUpdateNotes}
+                onChange={(e) => setPriorityUpdateNotes(e.target.value)}
+              />
             </div>
           )}
 
@@ -790,7 +942,51 @@ export const TicketDetail = () => {
             </div>
           )}
 
-          {/* Service Desk Triage Action */}
+          {/* Service Desk — Konfirmasi Tiket Baru dari Client */}
+          {user?.role === 'service_desk' && ticket.status === 'pending_confirmation' && (
+            <div className="bg-sky-50 border border-sky-200 rounded-lg p-5 flex flex-col gap-4">
+              <div>
+                <h3 className="text-xs font-bold text-sky-800 uppercase tracking-wider">Konfirmasi Tiket Client</h3>
+                <p className="text-xs text-sky-700 leading-normal mt-1">
+                  Tiket baru dari client menunggu konfirmasi. Tinjau detail dan putuskan apakah tiket ini valid untuk diproses.
+                </p>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1.5">
+                  Catatan Konfirmasi / Alasan Penolakan <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  className="w-full text-xs border border-slate-300 rounded-sm p-3 focus:outline-none focus:border-sky-500 bg-white"
+                  rows="3"
+                  placeholder="Tuliskan catatan atau alasan keputusan kamu..."
+                  value={confirmNotes}
+                  onChange={(e) => setConfirmNotes(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleConfirmTicket('confirm')}
+                  disabled={submitting}
+                  className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <CheckCircle className="w-3.5 h-3.5" />
+                  <span>Konfirmasi Tiket (Valid)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleConfirmTicket('reject')}
+                  disabled={submitting}
+                  className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                  <span>Tolak Tiket</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Service Desk Triage Action — eskalasi ke PM (hanya saat open) */}
           {user?.role === 'service_desk' && ticket.status === 'open' && (
             <div className="bg-white border border-primary/20 bg-primary-tint/10 rounded-lg p-5 flex flex-col gap-4">
               <h3 className="text-xs font-bold text-primary uppercase tracking-wider">Tindakan Service Desk</h3>
@@ -905,9 +1101,9 @@ export const TicketDetail = () => {
           {/* Empty Actions Block */}
           {(!user ||
             (user.role === 'programmer' && (!isAssignedProgrammer || !['assigned','in_progress','pending_review'].includes(ticket.status))) ||
-            (user.role === 'service_desk' && ticket.status !== 'resolved' && ticket.status !== 'open') ||
-            (user.role === 'project_manager' && ticket.status !== 'escalated_to_pm' && ticket.status !== 'pending_review') ||
-            (user.role === 'owner') ||
+            (user.role === 'service_desk' && !['resolved','open','pending_confirmation'].includes(ticket.status)) ||
+            (user.role === 'project_manager' && !['escalated_to_pm','pending_review'].includes(ticket.status) && ['closed','rejected'].includes(ticket.status)) ||
+            (user.role === 'owner' && ticket.status !== 'escalated_to_owner') ||
             (ticket.status === 'closed' || ticket.status === 'rejected')
           ) && (
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-center text-slate-400 text-xs flex items-center justify-center gap-1.5">
