@@ -13,7 +13,9 @@ export const ServiceDeskDashboard = ({
   const [priority, setPriority] = useState('belum_ditentukan');
   const [attachment, setAttachment] = useState(null);
 
-  const [statusNote, setStatusNote] = useState('');
+  const [statusNote,       setStatusNote]       = useState('');
+  const [sdSelfCloseNote,  setSdSelfCloseNote]  = useState('');
+  const [showSdClose,      setShowSdClose]       = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -60,7 +62,7 @@ export const ServiceDeskDashboard = ({
     }
     setSubmitting(true);
     try {
-      await axios.post(`/tickets/${selectedTicket.id}/status`, {
+      await axios.post(`/tickets/${selectedTicket.ticket_id || selectedTicket.id}/status`, {
         status,
         notes: statusNote
       });
@@ -68,6 +70,26 @@ export const ServiceDeskDashboard = ({
       await fetchTickets();
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to update status');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSdSelfClose = async (e) => {
+    e.preventDefault();
+    if (!sdSelfCloseNote.trim()) return;
+    setSubmitting(true);
+    try {
+      await axios.post(`/tickets/${selectedTicket.ticket_id || selectedTicket.id}/status`, {
+        status: 'closed',
+        notes: '[SELF_RESOLVED] Tiket ditutup oleh Service Desk — masalah terselesaikan tanpa eskalasi. Alasan: ' + sdSelfCloseNote.trim(),
+        is_internal: true,
+      });
+      setSdSelfCloseNote('');
+      setShowSdClose(false);
+      await fetchTickets();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Gagal menutup tiket.');
     } finally {
       setSubmitting(false);
     }
@@ -148,6 +170,76 @@ export const ServiceDeskDashboard = ({
               </span>
             </div>
 
+            {/* Walk-in Reporter Info — only shown for walk-in tickets */}
+            {selectedTicket.reporter_name && (
+              <div style={{ marginBottom: '20px', padding: '14px 16px', borderRadius: '10px', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.35)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', paddingBottom: '8px', borderBottom: '1px solid rgba(251,191,36,0.25)' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#92400e' }}>👤 Info Reporter Walk-in</span>
+                  <span style={{ fontSize: '0.65rem', fontWeight: '700', textTransform: 'uppercase', background: 'rgba(251,191,36,0.25)', color: '#92400e', padding: '2px 8px', borderRadius: '999px' }}>Non-Sistem</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '0.8rem' }}>
+                  <div>
+                    <span style={{ color: '#92400e', display: 'block', marginBottom: '2px', fontSize: '0.7rem', fontWeight: '600' }}>Nama Client</span>
+                    <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{selectedTicket.reporter_name}</span>
+                  </div>
+                  {selectedTicket.reporter_contact && (
+                    <div>
+                      <span style={{ color: '#92400e', display: 'block', marginBottom: '2px', fontSize: '0.7rem', fontWeight: '600' }}>Nomor Kontak</span>
+                      <a href={`tel:${selectedTicket.reporter_contact}`} style={{ fontWeight: '700', color: 'var(--primary)', textDecoration: 'none' }}>
+                        📱 {selectedTicket.reporter_contact}
+                      </a>
+                    </div>
+                  )}
+                  {selectedTicket.contact_method && (
+                    <div>
+                      <span style={{ color: '#92400e', display: 'block', marginBottom: '2px', fontSize: '0.7rem', fontWeight: '600' }}>Metode Kontak</span>
+                      <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
+                        {selectedTicket.contact_method === 'whatsapp' && '💬 WhatsApp'}
+                        {selectedTicket.contact_method === 'telepon'  && '📞 Telepon'}
+                        {selectedTicket.contact_method === 'email'    && '📧 Email'}
+                        {selectedTicket.contact_method === 'walk_in'  && '🚶 Datang Langsung'}
+                        {selectedTicket.contact_method === 'lainnya'  && `📌 ${selectedTicket.contact_method_notes || 'Lainnya'}`}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                {/* Quick Contact Buttons */}
+                {selectedTicket.reporter_contact && (
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                    {selectedTicket.contact_method === 'whatsapp' && (
+                      <a
+                        href={`https://wa.me/${selectedTicket.reporter_contact.replace(/[^0-9]/g, '').replace(/^0/, '62')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn"
+                        style={{ flex: 1, fontSize: '0.75rem', padding: '6px 10px', background: '#16a34a', color: '#fff', border: 'none', textAlign: 'center', textDecoration: 'none', borderRadius: '6px', fontWeight: '700' }}
+                      >
+                        💬 Hubungi via WhatsApp
+                      </a>
+                    )}
+                    {selectedTicket.contact_method === 'telepon' && (
+                      <a
+                        href={`tel:${selectedTicket.reporter_contact}`}
+                        className="btn"
+                        style={{ flex: 1, fontSize: '0.75rem', padding: '6px 10px', background: '#2563eb', color: '#fff', border: 'none', textAlign: 'center', textDecoration: 'none', borderRadius: '6px', fontWeight: '700' }}
+                      >
+                        📞 Telepon Client
+                      </a>
+                    )}
+                    {selectedTicket.contact_method === 'email' && (
+                      <a
+                        href={`mailto:${selectedTicket.reporter_contact}`}
+                        className="btn"
+                        style={{ flex: 1, fontSize: '0.75rem', padding: '6px 10px', background: '#7c3aed', color: '#fff', border: 'none', textAlign: 'center', textDecoration: 'none', borderRadius: '6px', fontWeight: '700' }}
+                      >
+                        📧 Kirim Email ke Client
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div style={{ marginBottom: '24px' }}>
               <h4 style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '8px' }}>Description</h4>
               <p style={{ fontSize: '0.95rem', color: 'var(--text-primary)', background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-glass)', whiteSpace: 'pre-wrap' }}>
@@ -179,6 +271,61 @@ export const ServiceDeskDashboard = ({
                   <div><strong>Programmer:</strong> {selectedTicket.assignments[0].programmer?.name}</div>
                   <div><strong>Estimated Time:</strong> {selectedTicket.assignments[0].estimated_hours} {selectedTicket.assignments[0].estimated_unit === 'days' ? 'Hari' : 'Jam'}</div>
                 </div>
+              </div>
+            )}
+
+            {/* ── SD: Tutup Langsung / Self-Resolve ── walk-in only, any active status */}
+            {selectedTicket.reporter_name && !['closed', 'rejected'].includes(selectedTicket.status) && (
+              <div style={{ marginBottom: '20px', padding: '16px', borderRadius: '10px', border: '1px solid rgba(239,68,68,0.35)', background: 'rgba(239,68,68,0.04)' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: showSdClose ? '12px' : '0' }}>
+                  <div style={{ flex: 1 }}>
+                    <h4 style={{ fontSize: '0.85rem', fontWeight: '700', color: '#b91c1c', marginBottom: '2px' }}>❌ Tutup Tiket Walk-in (Self-Resolved)</h4>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                      Tutup kapanpun jika client walk-in konfirmasi masalah bukan kendala teknis — meski sudah dieskalasi ke PM/Programmer.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowSdClose(v => !v)}
+                    className={showSdClose ? 'btn btn-secondary' : 'btn btn-danger'}
+                    style={{ marginLeft: '12px', padding: '6px 14px', fontSize: '0.75rem', whiteSpace: 'nowrap', flexShrink: 0 }}
+                    disabled={submitting}
+                  >
+                    {showSdClose ? 'Batal' : 'Tutup Tiket'}
+                  </button>
+                </div>
+
+                {showSdClose && (
+                  <form onSubmit={handleSdSelfClose} style={{ display: 'flex', flexDirection: 'column', gap: '10px', borderTop: '1px solid rgba(239,68,68,0.2)', paddingTop: '12px' }}>
+                    {selectedTicket.status !== 'open' && (
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.35)', borderRadius: '8px', padding: '8px 12px', fontSize: '0.75rem', color: '#92400e' }}>
+                        <span style={{ flexShrink: 0 }}>⚠️</span>
+                        <span>
+                          Tiket ini sudah berstatus <strong>{selectedTicket.status.replace(/_/g, ' ')}</strong>. Menutupnya akan membatalkan pengerjaan PM / Programmer.
+                        </span>
+                      </div>
+                    )}
+                    <div className="form-group" style={{ marginBottom: '0' }}>
+                      <label className="form-label" style={{ color: '#b91c1c' }}>Alasan Penutupan <span style={{ color: '#ef4444' }}>*</span></label>
+                      <textarea
+                        className="form-control"
+                        rows="3"
+                        required
+                        placeholder="Contoh: Client mengonfirmasi perangkat belum terhubung ke internet. Setelah dihubungkan, masalah teratasi sendiri."
+                        value={sdSelfCloseNote}
+                        onChange={(e) => setSdSelfCloseNote(e.target.value)}
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="btn btn-danger"
+                      disabled={submitting || !sdSelfCloseNote.trim()}
+                      style={{ fontSize: '0.8rem' }}
+                    >
+                      {submitting ? 'Menutup...' : '❌ Konfirmasi Tutup Tiket'}
+                    </button>
+                  </form>
+                )}
               </div>
             )}
 

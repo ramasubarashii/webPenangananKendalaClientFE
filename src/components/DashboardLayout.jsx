@@ -9,7 +9,8 @@ import {
   UserCheck,
   CheckSquare,
   BarChart3,
-  LogOut
+  LogOut,
+  UserPlus,
 } from 'lucide-react';
 
 export const DashboardLayout = () => {
@@ -39,7 +40,8 @@ export const DashboardLayout = () => {
       case 'service_desk':
         return [
           ...defaultMenu,
-          { name: 'Create Ticket', path: '/tickets/create', icon: FilePlus },
+          { name: 'Eskalasi Tiket',  path: '/tickets/create',  icon: FilePlus  },
+          { name: 'Tiket Walk-in',   path: '/tickets/walk-in', icon: UserPlus  },
         ];
       case 'project_manager':
         return [

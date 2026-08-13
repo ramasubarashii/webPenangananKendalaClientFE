@@ -20,7 +20,12 @@ import {
   MessageSquare,
   RotateCcw,
   AlertTriangle,
-  Send
+  Send,
+  Phone,
+  MapPin,
+  Smartphone,
+  Mail,
+  UserCircle,
 } from 'lucide-react';
 import { SkeletonTicketDetail } from './SkeletonLoader';
 
@@ -345,6 +350,33 @@ export const TicketDetail = () => {
   // Action note states (For Programmer or Service Desk updates)
   const [actionNote, setActionNote] = useState('');
 
+  // SD Self-Resolve / Close states
+  const [sdCloseNote, setSdCloseNote]       = useState('');
+  const [showSdCloseForm, setShowSdCloseForm] = useState(false);
+
+  const handleSdSelfClose = async (e) => {
+    e.preventDefault();
+    if (!sdCloseNote.trim()) return;
+    setSubmitting(true);
+    setActionError('');
+    setActionSuccess('');
+    try {
+      await axios.post(`/tickets/${ticket.ticket_id || ticket.id}/status`, {
+        status: 'closed',
+        notes: '[SELF_RESOLVED] Tiket ditutup oleh Service Desk — masalah terselesaikan tanpa eskalasi. Alasan: ' + sdCloseNote.trim(),
+        is_internal: true,
+      });
+      setSdCloseNote('');
+      setShowSdCloseForm(false);
+      setActionSuccess('Tiket berhasil ditutup.');
+      await fetchTicket();
+    } catch (err) {
+      setActionError(err.response?.data?.message || 'Gagal menutup tiket.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const getPriorityBadge = (priority) => {
     const p = priority?.toLowerCase();
     switch (p) {
@@ -456,10 +488,22 @@ export const TicketDetail = () => {
               {formatPriorityText(ticket.priority)}
             </span>
           </div>
-          <h2 className="text-xl font-bold tracking-tight text-slate-900 mb-1 font-display">{ticket.title}</h2>
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 mb-1 font-display flex items-center gap-2 flex-wrap">
+            {ticket.title}
+            {ticket.reporter_name && (
+              <span className="text-[10px] font-bold uppercase tracking-widest bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full">
+                🚶 Walk-in
+              </span>
+            )}
+          </h2>
           <p className="text-xs text-slate-500 flex items-center gap-2 mt-1.5 font-mono">
             <User className="w-3.5 h-3.5 text-slate-400" />
-            <span className="font-sans text-slate-700">Dilaporkan oleh {ticket.creator?.name}</span>
+            <span className="font-sans text-slate-700">
+              {ticket.reporter_name
+                ? <>Dilaporkan: <strong>{ticket.reporter_name}</strong> (via SD: {ticket.creator?.name})</>
+                : <>Dilaporkan oleh {ticket.creator?.name}</>
+              }
+            </span>
             <span className="text-slate-300">|</span>
             <Calendar className="w-3.5 h-3.5 text-slate-400" />
             <span>{new Date(ticket.created_at).toLocaleString('id-ID')}</span>
@@ -642,6 +686,92 @@ export const TicketDetail = () => {
         {/* Right Column */}
         <div className="flex flex-col gap-6">
 
+          {/* Walk-in Reporter Info Card — only shown when ticket has reporter_name */}
+          {ticket.reporter_name && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-amber-200">
+                <UserCircle className="w-4 h-4 text-amber-600" />
+                <h3 className="text-xs font-bold text-amber-800 uppercase tracking-wider">Info Reporter Walk-in</h3>
+                <span className="ml-auto text-[10px] font-bold uppercase tracking-wide bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full">Non-Sistem</span>
+              </div>
+              <div className="flex flex-col gap-3 text-xs">
+
+                {/* Nama Reporter */}
+                <div>
+                  <span className="text-amber-600 block mb-0.5 flex items-center gap-1 font-semibold">
+                    <User className="w-3 h-3" /> Nama Client
+                  </span>
+                  <span className="font-bold text-slate-900 text-sm">{ticket.reporter_name}</span>
+                </div>
+
+                {/* Nomor Kontak */}
+                {ticket.reporter_contact && (
+                  <div>
+                    <span className="text-amber-600 block mb-0.5 flex items-center gap-1 font-semibold">
+                      <Phone className="w-3 h-3" /> Nomor Kontak
+                    </span>
+                    <a
+                      href={`tel:${ticket.reporter_contact}`}
+                      className="font-bold text-primary hover:underline flex items-center gap-1"
+                    >
+                      <Smartphone className="w-3 h-3" />
+                      {ticket.reporter_contact}
+                    </a>
+                  </div>
+                )}
+
+                {/* Metode Kontak */}
+                {ticket.contact_method && (
+                  <div>
+                    <span className="text-amber-600 block mb-0.5 flex items-center gap-1 font-semibold">
+                      <MapPin className="w-3 h-3" /> Metode Menghubungi SD
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 font-semibold text-slate-800 bg-white border border-amber-200 px-2.5 py-1 rounded-md">
+                      {ticket.contact_method === 'whatsapp'  && <><MessageSquare className="w-3 h-3 text-emerald-600" /> WhatsApp</>}
+                      {ticket.contact_method === 'telepon'   && <><Phone className="w-3 h-3 text-blue-600" /> Telepon</>}
+                      {ticket.contact_method === 'email'     && <><Mail className="w-3 h-3 text-purple-600" /> Email</>}
+                      {ticket.contact_method === 'walk_in'   && <><MapPin className="w-3 h-3 text-amber-600" /> Datang Langsung</>}
+                      {ticket.contact_method === 'lainnya'   && <><UserCircle className="w-3 h-3 text-slate-500" /> {ticket.contact_method_notes || 'Lainnya'}</>}
+                    </span>
+                  </div>
+                )}
+
+                {/* Quick Contact Button */}
+                {ticket.reporter_contact && ticket.contact_method === 'whatsapp' && (
+                  <a
+                    href={`https://wa.me/${ticket.reporter_contact.replace(/[^0-9]/g, '').replace(/^0/, '62')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 w-full flex items-center justify-center gap-2 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-md transition-colors cursor-pointer"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    Hubungi via WhatsApp
+                  </a>
+                )}
+
+                {ticket.reporter_contact && ticket.contact_method === 'telepon' && (
+                  <a
+                    href={`tel:${ticket.reporter_contact}`}
+                    className="mt-1 w-full flex items-center justify-center gap-2 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-md transition-colors cursor-pointer"
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                    Telepon Client
+                  </a>
+                )}
+
+                {ticket.reporter_contact && ticket.contact_method === 'email' && (
+                  <a
+                    href={`mailto:${ticket.reporter_contact}`}
+                    className="mt-1 w-full flex items-center justify-center gap-2 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-md transition-colors cursor-pointer"
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                    Kirim Email ke Client
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Assignment Info */}
           {currentAssignment && (
             <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
@@ -672,6 +802,75 @@ export const TicketDetail = () => {
           )}
 
           {/* Action Sections */}
+
+          {/* ── SD: Tutup Langsung (Self-Resolve) ── walk-in only, any active status ── */}
+          {user?.role === 'service_desk'
+            && ticket.reporter_name
+            && !['closed', 'rejected'].includes(ticket.status) && (
+            <div className="bg-white border border-red-200 rounded-lg p-5 flex flex-col gap-3 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs font-bold text-red-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <XCircle className="w-4 h-4" /> Tutup Tiket Walk-in (Self-Resolved)
+                  </h3>
+                  <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                    Gunakan kapanpun jika client walk-in mengonfirmasi masalahnya bukan kendala teknis
+                    (human error, belum konek internet, dll). Tiket langsung <strong className="text-red-600">ditutup</strong> meski sudah
+                    dieskalasi ke PM atau dikerjakan Programmer.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowSdCloseForm(v => !v)}
+                  className={`shrink-0 px-3 py-1.5 text-xs font-bold rounded-md border transition-colors cursor-pointer ${
+                    showSdCloseForm
+                      ? 'bg-slate-100 border-slate-300 text-slate-600'
+                      : 'bg-red-600 hover:bg-red-700 border-transparent text-white'
+                  }`}
+                >
+                  {showSdCloseForm ? 'Batal' : 'Tutup Tiket'}
+                </button>
+              </div>
+
+              {showSdCloseForm && (
+                <form onSubmit={handleSdSelfClose} className="flex flex-col gap-3 border-t border-red-100 pt-3 animate-fade-in">
+                  {/* Warn if ticket is already escalated / in-progress */}
+                  {!['open'].includes(ticket.status) && (
+                    <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 text-xs text-amber-800">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-600" />
+                      <span>
+                        Tiket ini sudah berstatus <strong>{ticket.status.replace(/_/g, ' ')}</strong>.
+                        Menutupnya sekarang akan membatalkan pengerjaan PM / Programmer secara otomatis.
+                      </span>
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
+                      Alasan Penutupan <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      id="sd-self-close-note"
+                      required
+                      rows={3}
+                      className="w-full text-xs border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-200 bg-white resize-none"
+                      placeholder="Contoh: Client mengonfirmasi perangkat belum terhubung ke internet. Setelah dihubungkan, masalah teratasi sendiri tanpa perlu eskalasi."
+                      value={sdCloseNote}
+                      onChange={(e) => setSdCloseNote(e.target.value)}
+                    />
+                  </div>
+                  <button
+                    id="btn-sd-self-close-confirm"
+                    type="submit"
+                    disabled={submitting || !sdCloseNote.trim()}
+                    className="w-full py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                  >
+                    <XCircle className="w-3.5 h-3.5" />
+                    {submitting ? 'Menutup Tiket...' : 'Konfirmasi Tutup Tiket'}
+                  </button>
+                </form>
+              )}
+            </div>
+          )}
 
           {/* PM Resource Assignment & Direct Owner Escalation */}
           {user?.role === 'project_manager' && ticket.status === 'escalated_to_pm' && (

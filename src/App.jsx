@@ -7,6 +7,7 @@ import { DashboardLayout } from './components/DashboardLayout';
 import { DashboardOverview } from './components/DashboardOverview';
 import { TicketList } from './components/TicketList';
 import { CreateTicket } from './components/CreateTicket';
+import { WalkInTicket } from './components/WalkInTicket';
 import { AssignTicket } from './components/AssignTicket';
 import { MyTasks } from './components/MyTasks';
 import { Reports } from './components/Reports';
@@ -122,6 +123,15 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['service_desk']}>
                   <CreateTicket />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="tickets/walk-in"
+              element={
+                <ProtectedRoute allowedRoles={['service_desk']}>
+                  <WalkInTicket />
                 </ProtectedRoute>
               }
             />
