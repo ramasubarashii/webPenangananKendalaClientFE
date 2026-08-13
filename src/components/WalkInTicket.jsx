@@ -271,9 +271,12 @@ export const WalkInTicket = () => {
               <input
                 id="input-reporter-contact"
                 type="text"
-                placeholder="Contoh: 0812-3456-7890"
+                placeholder="Contoh: 081234567890"
                 value={reporterContact}
-                onChange={(e) => setReporterContact(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^0-9]/g, '');
+                  setReporterContact(val);
+                }}
                 className="w-full text-sm border border-slate-300 rounded-lg px-3.5 py-2.5 bg-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all duration-150 placeholder:text-slate-400"
               />
             </div>
