@@ -26,6 +26,9 @@ import {
   Smartphone,
   Mail,
   UserCircle,
+  CheckCircle2,
+  CheckCheck,
+  X,
 } from 'lucide-react';
 import { SkeletonTicketDetail } from './SkeletonLoader';
 
@@ -74,6 +77,8 @@ export const TicketDetail = () => {
   const [isOwnerModalOpen, setIsOwnerModalOpen] = useState(false);
   const [ownerEscalationNotes, setOwnerEscalationNotes] = useState('');
   const [ownerDecisionNotes, setOwnerDecisionNotes] = useState('');
+  const [isOwnerDecisionModalOpen, setIsOwnerDecisionModalOpen] = useState(false);
+  const [ownerDecisionType, setOwnerDecisionType] = useState('approved'); // 'approved' | 'resolved' | 'returned_to_pm' | 'rejected'
 
   const handlePmReviewSubmit = async (decision) => {
     setActionError('');
@@ -172,7 +177,8 @@ export const TicketDetail = () => {
     }
   };
 
-  const handleOwnerDecisionSubmit = async (decision) => {
+  const handleOwnerDecisionSubmit = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
     setActionError('');
     setActionSuccess('');
 
@@ -184,11 +190,12 @@ export const TicketDetail = () => {
     setSubmitting(true);
     try {
       const res = await axios.post(`/tickets/${ticket.ticket_id || ticket.id}/owner-decision`, {
-        decision,
+        decision: ownerDecisionType,
         notes: ownerDecisionNotes
       });
       setOwnerDecisionNotes('');
       setActionSuccess(res.data.message);
+      setIsOwnerDecisionModalOpen(false);
       await fetchTicket();
     } catch (err) {
       setActionError(err.response?.data?.message || 'Gagal menyimpan keputusan Owner.');
@@ -1088,58 +1095,33 @@ export const TicketDetail = () => {
             </div>
           )}
 
-          {/* Owner Decision Controls */}
+          {/* Owner Decision Action Box */}
           {user?.role === 'owner' && ticket.status === 'escalated_to_owner' && (
-            <div className="bg-amber-50/60 border border-amber-300 rounded-lg p-5 flex flex-col gap-4 shadow-sm">
-              <h3 className="text-xs font-bold text-amber-900 uppercase tracking-wider">Keputusan Executive Owner</h3>
-              <p className="text-xs text-slate-700 leading-normal">
-                Tiket ini dieskalasikan oleh PM untuk mendapatkan persetujuan dan keputusan resmi dari Anda.
-              </p>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5">
-                  Catatan Keputusan Owner <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  className="w-full text-xs border border-slate-300 rounded-sm p-3 focus:outline-none focus:border-amber-600 bg-white"
-                  rows="3"
-                  placeholder="Tuliskan persetujuan, alasan penolakan, atau arahan khusus untuk PM..."
-                  value={ownerDecisionNotes}
-                  onChange={(e) => setOwnerDecisionNotes(e.target.value)}
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleOwnerDecisionSubmit('approved')}
-                  disabled={submitting}
-                  className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <CheckCircle className="w-3.5 h-3.5" />
-                  <span>Setujui (Approved & Teruskan ke PM)</span>
-                </button>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleOwnerDecisionSubmit('returned_to_pm')}
-                    disabled={submitting}
-                    className="flex-1 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    <span>Kembalikan ke PM</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleOwnerDecisionSubmit('rejected')}
-                    disabled={submitting}
-                    className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    <XCircle className="w-3.5 h-3.5" />
-                    <span>Tolak (Reject)</span>
-                  </button>
+            <div className="bg-amber-50/80 border border-amber-300 rounded-lg p-5 flex flex-col gap-3 shadow-xs">
+              <div className="flex items-center gap-2 text-amber-900">
+                <div className="p-1.5 bg-amber-500/20 rounded-md">
+                  <Crown className="w-4 h-4 text-amber-700" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider">Keputusan Executive Owner</h3>
+                  <p className="text-[11px] text-slate-600 mt-0.5 leading-snug">
+                    Tiket ini dieskalasikan oleh PM untuk mendapatkan persetujuan dan keputusan resmi dari Anda.
+                  </p>
                 </div>
               </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setOwnerDecisionType('approved');
+                  setOwnerDecisionNotes('');
+                  setIsOwnerDecisionModalOpen(true);
+                }}
+                className="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-lg transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs"
+              >
+                <Crown className="w-4 h-4" />
+                <span>Beri Keputusan Owner</span>
+              </button>
             </div>
           )}
 
@@ -1508,6 +1490,185 @@ export const TicketDetail = () => {
                   className="flex-1 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs rounded-sm transition-colors cursor-pointer"
                 >
                   Batal
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Owner Decision Modal Overlay */}
+      {isOwnerDecisionModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in text-left">
+          <div className="bg-white border border-slate-200 rounded-xl max-w-lg w-full p-6 shadow-2xl flex flex-col gap-4 relative">
+            {/* Modal Header */}
+            <div className="flex justify-between items-start border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-amber-100 text-amber-700">
+                  <Crown className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Keputusan Owner Tiket</h3>
+                  <p className="text-xs text-slate-500 font-mono">
+                    {ticket.ticket_id || `TCK-OLD-${ticket.id}`} — {ticket.title}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsOwnerDecisionModalOpen(false)}
+                disabled={submitting}
+                className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleOwnerDecisionSubmit} className="flex flex-col gap-4">
+              {/* Decision Type Radio Picker */}
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                  Pilih Keputusan Strategis <span className="text-red-500">*</span>
+                </label>
+                <div className="flex flex-col gap-2">
+                  {/* Option 1: Approved to PM */}
+                  <label
+                    className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                      ownerDecisionType === 'approved'
+                        ? 'border-emerald-500 bg-emerald-50/40 text-emerald-900 font-semibold'
+                        : 'border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="ownerDecisionType"
+                      value="approved"
+                      checked={ownerDecisionType === 'approved'}
+                      onChange={(e) => setOwnerDecisionType(e.target.value)}
+                      className="mt-1 accent-emerald-600 cursor-pointer"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-emerald-700 flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Disetujui — Diteruskan ke PM (Eksekusi)
+                      </span>
+                      <p className="text-[11px] text-slate-500 font-normal mt-0.5">
+                        Menyetujui eskalasi. Tiket dikembalikan ke PM untuk ditugaskan ke Programmer.
+                      </p>
+                    </div>
+                  </label>
+
+                  {/* Option 2: Approved & Self-Resolved */}
+                  <label
+                    className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                      ownerDecisionType === 'resolved'
+                        ? 'border-teal-500 bg-teal-50/40 text-teal-900 font-semibold'
+                        : 'border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="ownerDecisionType"
+                      value="resolved"
+                      checked={ownerDecisionType === 'resolved'}
+                      onChange={(e) => setOwnerDecisionType(e.target.value)}
+                      className="mt-1 accent-teal-600 cursor-pointer"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-teal-700 flex items-center gap-1">
+                        <CheckCheck className="w-3.5 h-3.5" /> Disetujui & Selesaikan Langsung (Resolved)
+                      </span>
+                      <p className="text-[11px] text-slate-500 font-normal mt-0.5">
+                        Masalah disetujui & selesai di tingkat Owner tanpa perlu Programmer. Tiket siap diverifikasi Service Desk.
+                      </p>
+                    </div>
+                  </label>
+
+                  {/* Option 3: Returned to PM */}
+                  <label
+                    className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                      ownerDecisionType === 'returned_to_pm'
+                        ? 'border-indigo-500 bg-indigo-50/40 text-indigo-900 font-semibold'
+                        : 'border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="ownerDecisionType"
+                      value="returned_to_pm"
+                      checked={ownerDecisionType === 'returned_to_pm'}
+                      onChange={(e) => setOwnerDecisionType(e.target.value)}
+                      className="mt-1 accent-indigo-600 cursor-pointer"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-indigo-700 flex items-center gap-1">
+                        <RotateCcw className="w-3.5 h-3.5" /> Dikembalikan ke PM (Kajian Ulang)
+                      </span>
+                      <p className="text-[11px] text-slate-500 font-normal mt-0.5">
+                        Mengembalikan tiket ke PM dengan arahan khusus untuk dikaji ulang.
+                      </p>
+                    </div>
+                  </label>
+
+                  {/* Option 4: Rejected */}
+                  <label
+                    className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                      ownerDecisionType === 'rejected'
+                        ? 'border-rose-500 bg-rose-50/40 text-rose-900 font-semibold'
+                        : 'border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="ownerDecisionType"
+                      value="rejected"
+                      checked={ownerDecisionType === 'rejected'}
+                      onChange={(e) => setOwnerDecisionType(e.target.value)}
+                      className="mt-1 accent-rose-600 cursor-pointer"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-rose-700 flex items-center gap-1">
+                        <XCircle className="w-3.5 h-3.5" /> Ditolak Permanen (Rejected)
+                      </span>
+                      <p className="text-[11px] text-slate-500 font-normal mt-0.5">
+                        Menolak eskalasi secara permanen. Tiket akan ditutup dari antrean.
+                      </p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Decision Notes */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                  Catatan & Arahan Owner <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  rows="3"
+                  required
+                  placeholder="Tuliskan arahan, pertimbangan, atau catatan khusus untuk PM..."
+                  value={ownerDecisionNotes}
+                  onChange={(e) => setOwnerDecisionNotes(e.target.value)}
+                  className="w-full text-xs border border-slate-300 rounded-lg p-3 bg-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20"
+                />
+              </div>
+
+              {/* Modal Buttons */}
+              <div className="flex gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsOwnerDecisionModalOpen(false)}
+                  disabled={submitting}
+                  className="flex-1 py-2.5 border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs rounded-lg transition-colors cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs disabled:opacity-50"
+                >
+                  {submitting ? 'Menyimpan...' : 'Simpan Keputusan'}
                 </button>
               </div>
             </form>
