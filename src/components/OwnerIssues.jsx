@@ -12,11 +12,10 @@ import {
   FileText,
   User,
   FileDown,
-  ArrowRight,
   ShieldAlert,
   Inbox,
   X,
-  MessageSquare,
+  CheckCheck,
 } from 'lucide-react';
 import { SkeletonStatCards } from './SkeletonLoader';
 
@@ -24,11 +23,11 @@ export const OwnerIssues = () => {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('pending'); // 'pending' | 'processed' | 'all'
+  const [activeTab, setActiveTab] = useState('pending'); // 'pending' | 'approved' | 'returned' | 'rejected' | 'all'
 
   // Modal State
   const [selectedTicket, setSelectedTicket] = useState(null);
-  const [decision, setDecision] = useState('approved'); // 'approved' | 'returned_to_pm' | 'rejected'
+  const [decision, setDecision] = useState('approved'); // 'approved' | 'resolved' | 'returned_to_pm' | 'rejected'
   const [decisionNotes, setDecisionNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [modalError, setModalError] = useState('');
@@ -55,20 +54,29 @@ export const OwnerIssues = () => {
     if (ticket.assigned_to_role === 'OWNER') return true;
     // Check if progress logs indicate owner involvement
     const hasOwnerLog = ticket.progress_logs?.some(
-      (l) => l.new_status === 'escalated_to_owner' || l.notes?.includes('Keputusan Owner') || l.notes?.includes('Dieskalasikan ke Owner')
+      (l) => l.new_status === 'escalated_to_owner' || l.notes?.includes('Keputusan Owner') || l.notes?.includes('[OWNER_DECISION') || l.notes?.includes('Dieskalasikan ke Owner')
     );
     return hasOwnerLog;
   };
 
   const ownerTickets = tickets.filter(isOwnerEscalatedTicket);
 
+  // Helper checks for ticket log decisions
+  const isTicketApprovedByOwner = (t) =>
+    t.progress_logs?.some((l) => l.notes?.includes('[OWNER_DECISION_APPROVED]') || l.notes?.includes('[OWNER_DECISION_RESOLVED]') || (l.notes?.includes('Keputusan Owner') && l.notes?.includes('Disetujui')));
+
+  const isTicketReturnedByOwner = (t) =>
+    t.progress_logs?.some((l) => l.notes?.includes('[OWNER_DECISION_RETURNED]') || (l.notes?.includes('Keputusan Owner') && l.notes?.includes('Dikembalikan')));
+
+  const isTicketRejectedByOwner = (t) =>
+    t.status === 'rejected' && t.progress_logs?.some((l) => l.notes?.includes('[OWNER_DECISION_REJECTED]') || l.notes?.includes('Keputusan Owner'));
+
   // Metrics calculation
   const stats = {
     pending: ownerTickets.filter((t) => t.status === 'escalated_to_owner').length,
-    approved: ownerTickets.filter((t) =>
-      t.progress_logs?.some((l) => l.notes?.includes('Keputusan Owner') && l.notes?.includes('Disetujui'))
-    ).length,
-    rejected: ownerTickets.filter((t) => t.status === 'rejected' && t.progress_logs?.some((l) => l.notes?.includes('Keputusan Owner'))).length,
+    approved: ownerTickets.filter(isTicketApprovedByOwner).length,
+    returned: ownerTickets.filter(isTicketReturnedByOwner).length,
+    rejected: ownerTickets.filter(isTicketRejectedByOwner).length,
     total: ownerTickets.length,
   };
 
@@ -76,7 +84,9 @@ export const OwnerIssues = () => {
   const filteredTickets = ownerTickets.filter((t) => {
     // Tab filter
     if (activeTab === 'pending' && t.status !== 'escalated_to_owner') return false;
-    if (activeTab === 'processed' && t.status === 'escalated_to_owner') return false;
+    if (activeTab === 'approved' && !isTicketApprovedByOwner(t)) return false;
+    if (activeTab === 'returned' && !isTicketReturnedByOwner(t)) return false;
+    if (activeTab === 'rejected' && !isTicketRejectedByOwner(t)) return false;
 
     // Search query
     if (!searchQuery.trim()) return true;
@@ -207,7 +217,7 @@ export const OwnerIssues = () => {
               <AlertTriangle className="w-4 h-4 text-amber-600" />
               Perlu Keputusan
             </span>
-            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+            {stats.pending > 0 && <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />}
           </div>
           <p className="text-3xl font-extrabold text-amber-600">{stats.pending}</p>
           <p className="text-[11px] text-slate-400 mt-1">Tiket menunggu tindakan Anda</p>
@@ -215,9 +225,9 @@ export const OwnerIssues = () => {
 
         {/* Approved History Card */}
         <div
-          onClick={() => setActiveTab('processed')}
+          onClick={() => setActiveTab('approved')}
           className={`bg-white border rounded-xl p-5 shadow-sm transition-all cursor-pointer ${
-            activeTab === 'processed' ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/10' : 'border-slate-200 hover:border-emerald-300'
+            activeTab === 'approved' ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/10' : 'border-slate-200 hover:border-emerald-300'
           }`}
         >
           <div className="flex justify-between items-center mb-3">
@@ -227,14 +237,31 @@ export const OwnerIssues = () => {
             </span>
           </div>
           <p className="text-3xl font-extrabold text-emerald-600">{stats.approved}</p>
-          <p className="text-[11px] text-slate-400 mt-1">Diteruskan kembali ke PM</p>
+          <p className="text-[11px] text-slate-400 mt-1">Disetujui ke PM / Selesai</p>
+        </div>
+
+        {/* Returned to PM History Card */}
+        <div
+          onClick={() => setActiveTab('returned')}
+          className={`bg-white border rounded-xl p-5 shadow-sm transition-all cursor-pointer ${
+            activeTab === 'returned' ? 'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/10' : 'border-slate-200 hover:border-indigo-300'
+          }`}
+        >
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-xs font-bold text-indigo-700 uppercase tracking-wider flex items-center gap-1.5">
+              <RotateCcw className="w-4 h-4 text-indigo-600" />
+              Dikembalikan ke PM
+            </span>
+          </div>
+          <p className="text-3xl font-extrabold text-indigo-600">{stats.returned}</p>
+          <p className="text-[11px] text-slate-400 mt-1">Butuh kajian ulang PM</p>
         </div>
 
         {/* Rejected History Card */}
         <div
-          onClick={() => setActiveTab('processed')}
+          onClick={() => setActiveTab('rejected')}
           className={`bg-white border rounded-xl p-5 shadow-sm transition-all cursor-pointer ${
-            activeTab === 'processed' ? 'border-rose-500 ring-2 ring-rose-500/20 bg-rose-50/10' : 'border-slate-200 hover:border-rose-300'
+            activeTab === 'rejected' ? 'border-rose-500 ring-2 ring-rose-500/20 bg-rose-50/10' : 'border-slate-200 hover:border-rose-300'
           }`}
         >
           <div className="flex justify-between items-center mb-3">
@@ -246,34 +273,17 @@ export const OwnerIssues = () => {
           <p className="text-3xl font-extrabold text-rose-600">{stats.rejected}</p>
           <p className="text-[11px] text-slate-400 mt-1">Penolakan permanen</p>
         </div>
-
-        {/* Total Escalated Card */}
-        <div
-          onClick={() => setActiveTab('all')}
-          className={`bg-white border rounded-xl p-5 shadow-sm transition-all cursor-pointer ${
-            activeTab === 'all' ? 'border-primary ring-2 ring-primary/20 bg-primary/5' : 'border-slate-200 hover:border-primary/40'
-          }`}
-        >
-          <div className="flex justify-between items-center mb-3">
-            <span className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
-              <Crown className="w-4 h-4 text-primary" />
-              Total Eskalasi PM
-            </span>
-          </div>
-          <p className="text-3xl font-extrabold text-slate-900">{stats.total}</p>
-          <p className="text-[11px] text-slate-400 mt-1">Seluruh riwayat masalah PM</p>
-        </div>
       </div>
 
       {/* Main Content Area */}
       <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col gap-5">
         {/* Navigation Tabs & Search Controls */}
         <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 border-b border-slate-100 pb-4">
-          {/* Tabs */}
-          <div className="flex gap-1.5 bg-slate-100 p-1 rounded-lg self-start">
+          {/* Filter Tabs */}
+          <div className="flex flex-wrap gap-1.5 bg-slate-100 p-1 rounded-lg self-start">
             <button
               onClick={() => setActiveTab('pending')}
-              className={`px-3.5 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
                 activeTab === 'pending'
                   ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
@@ -282,20 +292,46 @@ export const OwnerIssues = () => {
               <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
               <span>Perlu Keputusan ({stats.pending})</span>
             </button>
+
             <button
-              onClick={() => setActiveTab('processed')}
-              className={`px-3.5 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeTab === 'processed'
+              onClick={() => setActiveTab('approved')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeTab === 'approved'
                   ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-              <span>Sudah Diproses</span>
+              <span>Disetujui ({stats.approved})</span>
             </button>
+
+            <button
+              onClick={() => setActiveTab('returned')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeTab === 'returned'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-indigo-500" />
+              <span>Dikembalikan ke PM ({stats.returned})</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('rejected')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeTab === 'rejected'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <XCircle className="w-3.5 h-3.5 text-rose-500" />
+              <span>Ditolak ({stats.rejected})</span>
+            </button>
+
             <button
               onClick={() => setActiveTab('all')}
-              className={`px-3.5 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
                 activeTab === 'all'
                   ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
@@ -306,11 +342,11 @@ export const OwnerIssues = () => {
           </div>
 
           {/* Search Box */}
-          <div className="relative flex-1 max-w-md">
+          <div className="relative flex-1 max-w-xs">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Cari ID tiket, judul, nama PM atau klien..."
+              placeholder="Cari ID tiket, judul, PM..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full text-xs border border-slate-300 rounded-lg pl-9 pr-4 py-2 bg-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all placeholder:text-slate-400"
@@ -328,7 +364,7 @@ export const OwnerIssues = () => {
                 <p className="text-slate-400 text-xs mt-0.5">
                   {activeTab === 'pending'
                     ? 'Saat ini tidak ada laporan masalah dari PM yang membutuhkan keputusan Anda.'
-                    : 'Tidak ada tiket eskalasi yang cocok dengan pencarian Anda.'}
+                    : 'Tidak ada tiket eskalasi yang cocok dengan filter ini.'}
                 </p>
               </div>
             </div>
@@ -345,7 +381,7 @@ export const OwnerIssues = () => {
               const ownerDecisionLog = (t.progress_logs || [])
                 .slice()
                 .reverse()
-                .find((l) => l.notes?.includes('Keputusan Owner'));
+                .find((l) => l.notes?.includes('Keputusan Owner') || l.notes?.includes('[OWNER_DECISION'));
 
               const pmName = t.assignments?.[0]?.pm?.name || pmEscalationLog?.user?.name || 'Project Manager';
 
@@ -409,12 +445,12 @@ export const OwnerIssues = () => {
 
                   {/* Owner Previous Decision Banner (if processed) */}
                   {ownerDecisionLog && !isPending && (
-                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 flex flex-col gap-1">
-                      <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5 uppercase tracking-wide">
-                        <Crown className="w-3.5 h-3.5 text-amber-500" />
-                        Keputusan Owner Terakhir ({new Date(ownerDecisionLog.created_at).toLocaleDateString('id-ID')})
+                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 flex flex-col gap-1">
+                      <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wide">
+                        <Crown className="w-4 h-4 text-amber-500" />
+                        Keputusan Owner ({new Date(ownerDecisionLog.created_at).toLocaleString('id-ID')})
                       </span>
-                      <p className="text-xs text-slate-800 font-medium">
+                      <p className="text-xs text-slate-800 font-medium leading-relaxed">
                         {ownerDecisionLog.notes}
                       </p>
                     </div>
@@ -485,7 +521,7 @@ export const OwnerIssues = () => {
               <button
                 onClick={handleCloseModal}
                 disabled={submitting}
-                className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -513,6 +549,7 @@ export const OwnerIssues = () => {
                   Pilih Keputusan Strategis <span className="text-red-500">*</span>
                 </label>
                 <div className="flex flex-col gap-2">
+                  {/* Option 1: Approved to PM */}
                   <label
                     className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
                       decision === 'approved'
@@ -526,22 +563,49 @@ export const OwnerIssues = () => {
                       value="approved"
                       checked={decision === 'approved'}
                       onChange={(e) => setDecision(e.target.value)}
-                      className="mt-1 accent-emerald-600"
+                      className="mt-1 accent-emerald-600 cursor-pointer"
                     />
                     <div>
                       <span className="text-xs font-bold text-emerald-700 flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Disetujui (Approved)
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Disetujui — Diteruskan ke PM (Eksekusi)
                       </span>
                       <p className="text-[11px] text-slate-500 font-normal mt-0.5">
-                        Menyetujui eskalasi. Tiket diteruskan kembali ke PM untuk langsung ditugaskan ke Programmer.
+                        Menyetujui eskalasi. Tiket dikembalikan ke PM untuk ditugaskan ke Programmer.
                       </p>
                     </div>
                   </label>
 
+                  {/* Option 2: Approved & Self-Resolved */}
+                  <label
+                    className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                      decision === 'resolved'
+                        ? 'border-teal-500 bg-teal-50/40 text-teal-900 font-semibold'
+                        : 'border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="decision"
+                      value="resolved"
+                      checked={decision === 'resolved'}
+                      onChange={(e) => setDecision(e.target.value)}
+                      className="mt-1 accent-teal-600 cursor-pointer"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-teal-700 flex items-center gap-1">
+                        <CheckCheck className="w-3.5 h-3.5" /> Disetujui & Selesaikan Langsung (Resolved)
+                      </span>
+                      <p className="text-[11px] text-slate-500 font-normal mt-0.5">
+                        Masalah disetujui & selesai di tingkat Owner tanpa perlu Programmer. Tiket siap diverifikasi Service Desk.
+                      </p>
+                    </div>
+                  </label>
+
+                  {/* Option 3: Returned to PM */}
                   <label
                     className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
                       decision === 'returned_to_pm'
-                        ? 'border-amber-500 bg-amber-50/40 text-amber-900 font-semibold'
+                        ? 'border-indigo-500 bg-indigo-50/40 text-indigo-900 font-semibold'
                         : 'border-slate-200 hover:bg-slate-50'
                     }`}
                   >
@@ -551,18 +615,19 @@ export const OwnerIssues = () => {
                       value="returned_to_pm"
                       checked={decision === 'returned_to_pm'}
                       onChange={(e) => setDecision(e.target.value)}
-                      className="mt-1 accent-amber-600"
+                      className="mt-1 accent-indigo-600 cursor-pointer"
                     />
                     <div>
-                      <span className="text-xs font-bold text-amber-700 flex items-center gap-1">
-                        <RotateCcw className="w-3.5 h-3.5" /> Dikembalikan ke PM
+                      <span className="text-xs font-bold text-indigo-700 flex items-center gap-1">
+                        <RotateCcw className="w-3.5 h-3.5" /> Dikembalikan ke PM (Kajian Ulang)
                       </span>
                       <p className="text-[11px] text-slate-500 font-normal mt-0.5">
-                        Mengembalikan ke PM dengan instruksi/catatan tambahan untuk dikaji ulang.
+                        Mengembalikan tiket ke PM dengan arahan khusus untuk dikaji ulang.
                       </p>
                     </div>
                   </label>
 
+                  {/* Option 4: Rejected */}
                   <label
                     className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
                       decision === 'rejected'
@@ -576,11 +641,11 @@ export const OwnerIssues = () => {
                       value="rejected"
                       checked={decision === 'rejected'}
                       onChange={(e) => setDecision(e.target.value)}
-                      className="mt-1 accent-rose-600"
+                      className="mt-1 accent-rose-600 cursor-pointer"
                     />
                     <div>
                       <span className="text-xs font-bold text-rose-700 flex items-center gap-1">
-                        <XCircle className="w-3.5 h-3.5" /> Ditolak (Rejected)
+                        <XCircle className="w-3.5 h-3.5" /> Ditolak Permanen (Rejected)
                       </span>
                       <p className="text-[11px] text-slate-500 font-normal mt-0.5">
                         Menolak eskalasi secara permanen. Tiket akan ditutup dari antrean.

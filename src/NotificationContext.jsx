@@ -131,6 +131,47 @@ export const NotificationProvider = ({ children }) => {
             });
           }
         });
+
+        // Notify 3: Owner decision on escalated ticket (Approved / Returned / Resolved / Rejected)
+        tickets.forEach((t) => {
+          const isPmOfTicket = t.assignments?.some(
+            (a) => a.pm_id === user.id || a.pm?.id === user.id
+          );
+
+          // Find owner decision logs
+          const ownerLogs = (t.progress_logs || []).filter(
+            (l) => l.notes && (
+              l.notes.includes('[OWNER_DECISION') ||
+              l.notes.includes('Keputusan Owner')
+            )
+          );
+
+          ownerLogs.forEach((log) => {
+            const key = makeKey('pm_owner_decision', t.id, log.id);
+            if (!seenKeysRef.current.has(key)) {
+              let title = 'Keputusan Owner Diterima';
+              if (log.notes.includes('APPROVED') || log.notes.includes('Disetujui')) {
+                title = 'Keputusan Owner: Disetujui (PM Eksekusi)';
+              } else if (log.notes.includes('RETURNED') || log.notes.includes('Dikembalikan')) {
+                title = 'Keputusan Owner: Dikembalikan ke PM';
+              } else if (log.notes.includes('RESOLVED')) {
+                title = 'Keputusan Owner: Disetujui & Selesai';
+              } else if (log.notes.includes('REJECTED') || log.notes.includes('Ditolak')) {
+                title = 'Keputusan Owner: Tiket Ditolak';
+              }
+
+              newNotifs.push({
+                id: key,
+                type: 'escalated',
+                title: title,
+                body: `${t.ticket_id} — ${t.title}`,
+                ticketPath: `/tickets/${t.ticket_id}`,
+                timestamp: log.created_at,
+                read: false,
+              });
+            }
+          });
+        });
       } else if (user.role === 'programmer') {
         // Notify 1: tickets assigned to this programmer
         tickets.forEach((t) => {
