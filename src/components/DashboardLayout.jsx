@@ -11,6 +11,7 @@ import {
   BarChart3,
   LogOut,
   UserPlus,
+  Crown,
 } from 'lucide-react';
 
 export const DashboardLayout = () => {
@@ -56,7 +57,8 @@ export const DashboardLayout = () => {
       case 'owner':
         return [
           ...defaultMenu,
-          { name: 'System Reports', path: '/reports', icon: BarChart3 },
+          { name: 'Laporan Issues (PM)', path: '/owner/issues', icon: Crown },
+          { name: 'System Reports',       path: '/reports',      icon: BarChart3 },
         ];
       case 'client':
         return [

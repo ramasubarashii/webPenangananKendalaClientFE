@@ -11,6 +11,7 @@ import { WalkInTicket } from './components/WalkInTicket';
 import { AssignTicket } from './components/AssignTicket';
 import { MyTasks } from './components/MyTasks';
 import { Reports } from './components/Reports';
+import { OwnerIssues } from './components/OwnerIssues';
 import { TicketDetail } from './components/TicketDetail';
 
 // Client Imports
@@ -150,6 +151,15 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['programmer']}>
                   <MyTasks />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="owner/issues"
+              element={
+                <ProtectedRoute allowedRoles={['owner']}>
+                  <OwnerIssues />
                 </ProtectedRoute>
               }
             />
