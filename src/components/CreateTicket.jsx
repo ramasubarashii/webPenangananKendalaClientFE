@@ -77,9 +77,7 @@ export const CreateTicket = () => {
 
     try {
       await axios.patch(`/tickets/${activeTicket.ticket_id || activeTicket.id}/escalate`, {
-        status: 'ESCALATED_TO_PM',
         internal_notes: internalNotes,
-        assigned_to_role: 'PM',
         priority: escalatePriority,
         category: escalateCategory
       });

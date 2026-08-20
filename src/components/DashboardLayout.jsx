@@ -12,6 +12,8 @@ import {
   LogOut,
   UserPlus,
   Crown,
+  Hand,
+  UserCheck2,
 } from 'lucide-react';
 
 export const DashboardLayout = () => {
@@ -48,10 +50,12 @@ export const DashboardLayout = () => {
         return [
           ...defaultMenu,
           { name: 'Assign Ticket', path: '/tickets/assign', icon: UserCheck },
+          { name: 'Ticket Claim Approval', path: '/tickets/claim-approval', icon: UserCheck2 },
         ];
       case 'programmer':
         return [
           ...defaultMenu,
+          { name: 'Available Tickets', path: '/tickets/available', icon: Hand },
           { name: 'My Tasks', path: '/tickets/tasks', icon: CheckSquare },
         ];
       case 'owner':

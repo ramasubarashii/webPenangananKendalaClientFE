@@ -67,10 +67,15 @@ export const TicketList = () => {
   const getStatusBadge = (status) => {
     const s = status?.toLowerCase();
     switch (s) {
+      case 'pending_confirmation': return 'bg-yellow-50 text-yellow-700 border border-yellow-200';
       case 'open': return 'bg-sky-50 text-sky-700 border border-sky-100';
       case 'escalated_to_pm': return 'bg-indigo-50 text-indigo-700 border border-indigo-100';
+      case 'waiting_programmer': return 'bg-cyan-50 text-cyan-700 border border-cyan-100';
+      case 'waiting_pm_approval': return 'bg-amber-50 text-amber-700 border border-amber-100';
       case 'assigned': return 'bg-purple-50 text-purple-700 border border-purple-100';
       case 'in_progress': case 'in progress': return 'bg-amber-50 text-amber-700 border border-amber-100';
+      case 'pending_review': return 'bg-orange-50 text-orange-700 border border-orange-200';
+      case 'escalated_to_owner': return 'bg-rose-50 text-rose-700 border border-rose-200';
       case 'resolved': return 'bg-emerald-50 text-emerald-700 border border-emerald-100';
       case 'closed': return 'bg-slate-100 text-slate-600 border border-slate-200';
       case 'rejected': return 'bg-red-50 text-red-700 border border-red-100';
@@ -122,10 +127,15 @@ export const TicketList = () => {
             onChange={(e) => setStatusFilter(e.target.value)}
           >
             <option value="all">Semua Status</option>
+            <option value="pending_confirmation">Pending Confirmation</option>
             <option value="open">Open</option>
             <option value="escalated_to_pm">Escalated to PM</option>
+            <option value="waiting_programmer">Waiting Programmer</option>
+            <option value="waiting_pm_approval">Waiting PM Approval</option>
             <option value="assigned">Assigned</option>
             <option value="in_progress">In Progress</option>
+            <option value="pending_review">Pending Review</option>
+            <option value="escalated_to_owner">Escalated to Owner</option>
             <option value="resolved">Resolved</option>
             <option value="closed">Closed</option>
             <option value="rejected">Rejected</option>
