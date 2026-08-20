@@ -42,6 +42,28 @@ export const Profile = () => {
     }
   }, [user]);
 
+  // Auto-dismiss profile form alerts after 4 seconds
+  useEffect(() => {
+    if (profileSuccess || profileError) {
+      const timer = setTimeout(() => {
+        setProfileSuccess('');
+        setProfileError('');
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [profileSuccess, profileError]);
+
+  // Auto-dismiss password form alerts after 4 seconds
+  useEffect(() => {
+    if (passwordSuccess || passwordError) {
+      const timer = setTimeout(() => {
+        setPasswordSuccess('');
+        setPasswordError('');
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [passwordSuccess, passwordError]);
+
   const getRoleDisplay = (role) => {
     switch (role) {
       case 'service_desk':    return 'Service Desk';
