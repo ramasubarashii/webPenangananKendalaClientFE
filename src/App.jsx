@@ -12,6 +12,7 @@ import { AssignTicket } from './components/AssignTicket';
 import { MyTasks } from './components/MyTasks';
 import { Reports } from './components/Reports';
 import { OwnerIssues } from './components/OwnerIssues';
+import { Profile } from './components/Profile';
 import { TicketDetail } from './components/TicketDetail';
 
 // Client Imports
@@ -172,6 +173,9 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
+            {/* Profile Route — Accessible to all logged-in roles */}
+            <Route path="profile" element={<Profile />} />
 
             {/* Ticket details routing lookup by ticket_id string */}
             <Route path="tickets/:ticketId" element={<TicketDetail />} />

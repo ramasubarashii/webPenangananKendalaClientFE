@@ -128,12 +128,16 @@ export const DashboardLayout = () => {
 
         {/* Sidebar Footer - User info & Logout */}
         <div className="p-4 border-t border-slate-200/70 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs font-display shrink-0 border border-slate-200/60">
+          <div
+            onClick={() => navigate('/profile')}
+            title="Pengaturan Profil & Keamanan"
+            className="flex items-center gap-2.5 min-w-0 flex-1 p-1.5 -ml-1.5 rounded-lg hover:bg-slate-100/80 transition-colors cursor-pointer group"
+          >
+            <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-extrabold text-xs font-display shrink-0 border border-primary/20 group-hover:scale-105 transition-transform">
               {user?.name?.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <span className="block text-xs font-bold text-slate-900 truncate leading-tight font-display">{user?.name}</span>
+              <span className="block text-xs font-bold text-slate-900 truncate leading-tight font-display group-hover:text-primary transition-colors">{user?.name}</span>
               <span className="block text-[10px] font-medium text-slate-400 truncate mt-0.5">
                 {getRoleDisplay(user?.role)}
               </span>
