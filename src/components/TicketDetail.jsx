@@ -47,6 +47,8 @@ export const TicketDetail = () => {
   const [error, setError] = useState('');
   const [copiedId, setCopiedId] = useState('');
 
+  const [releaseForClaimNotes, setReleaseForClaimNotes] = useState('');
+
   // PM States
   const [programmers, setProgrammers] = useState([]);
   const [selectedProgrammerId, setSelectedProgrammerId] = useState('');
@@ -275,6 +277,30 @@ export const TicketDetail = () => {
     }
   };
 
+  const handleReleaseForClaim = async (e) => {
+    e.preventDefault();
+    setActionError('');
+    setActionSuccess('');
+
+    if (!releaseForClaimNotes.trim()) {
+      setActionError('Harap berikan catatan untuk merilis tiket ke Available Tickets.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await axios.post(`/tickets/${ticket.ticket_id}/release-for-claim`, {
+        notes: releaseForClaimNotes,
+      });
+      setReleaseForClaimNotes('');
+      setActionSuccess(res.data.message || 'Tiket berhasil dirilis untuk claim.');
+      await fetchTicket();
+    } catch (err) {
+      setActionError(err.response?.data?.message || 'Gagal merilis tiket untuk claim.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleStatusUpdate = async (newStatus) => {
     setActionError('');
     setActionSuccess('');
@@ -337,9 +363,7 @@ export const TicketDetail = () => {
     setSubmitting(true);
     try {
       await axios.patch(`/tickets/${ticket.ticket_id}/escalate`, {
-        status: 'ESCALATED_TO_PM',
         internal_notes: escalateNotes,
-        assigned_to_role: 'PM',
         priority: escalatePriority,
         category: escalateCategory
       });
@@ -405,6 +429,8 @@ export const TicketDetail = () => {
     switch (s) {
       case 'open': return 'bg-sky-50 text-sky-700 border border-sky-100';
       case 'escalated_to_pm': return 'bg-indigo-50 text-indigo-700 border border-indigo-100';
+      case 'waiting_programmer': return 'bg-cyan-50 text-cyan-700 border border-cyan-100';
+      case 'waiting_pm_approval': return 'bg-amber-50 text-amber-700 border border-amber-100';
       case 'escalated_to_owner': return 'bg-rose-50 text-rose-700 border border-rose-100';
       case 'assigned': return 'bg-purple-50 text-purple-700 border border-purple-100';
       case 'in_progress': case 'in progress': return 'bg-amber-50 text-amber-700 border border-amber-100';
@@ -984,6 +1010,32 @@ export const TicketDetail = () => {
                   <span>{submitting ? 'Assigning...' : 'Assign Programmer'}</span>
                 </button>
               </form>
+
+              {/* Release to Available Tickets (claim workflow) */}
+              <div className="border-t border-primary/10 pt-4 flex flex-col gap-3">
+                <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                  Atau: Rilis ke Available Tickets
+                </h4>
+                <p className="text-[11px] text-slate-500 leading-normal">
+                  Tiket akan berstatus <strong>waiting_programmer</strong> dan programmer dapat melakukan claim.
+                </p>
+                <form onSubmit={handleReleaseForClaim} className="flex flex-col gap-3">
+                  <textarea
+                    className="w-full text-xs border border-slate-300 rounded-sm px-3 py-2 focus:outline-none focus:border-primary min-h-[60px]"
+                    placeholder="Catatan PM untuk programmer..."
+                    value={releaseForClaimNotes}
+                    onChange={(e) => setReleaseForClaimNotes(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full py-2 bg-cyan-700 hover:bg-cyan-800 text-white font-bold text-xs rounded-sm transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {submitting ? 'Merilis...' : 'Rilis ke Waiting Programmer'}
+                  </button>
+                </form>
+              </div>
 
               {/* Direct PM to Owner Escalation without assigning Programmer */}
               <div className="border-t border-primary/10 pt-3">

@@ -24,6 +24,8 @@ const statusLabel = (status) => {
     pending_confirmation: 'Menunggu Konfirmasi SD',
     open: 'Tiket Dikonfirmasi (Open)',
     escalated_to_pm: 'Dieskalasikan ke PM',
+    waiting_programmer: 'Tersedia untuk Claim Programmer',
+    waiting_pm_approval: 'Menunggu Persetujuan Claim PM',
     assigned: 'Ditugaskan ke Developer',
     in_progress: 'Sedang Dikerjakan',
     pending_review: 'Menunggu Review PM',
@@ -173,30 +175,88 @@ export const NotificationProvider = ({ children }) => {
           });
         });
       } else if (user.role === 'programmer') {
-        // Notify 1: tickets assigned to this programmer
+        // Notify 1: tickets assigned to this programmer (via claim approve or direct assign)
         tickets.forEach((t) => {
           const isAssigned = t.assignments?.some(
             (a) => a.programmer_id === user.id || a.programmer?.id === user.id
           );
           if (!isAssigned) return;
-          const key = makeKey('prog_assign', t.id, t.status);
-          if (
-            (t.status === 'assigned' || t.status === 'in_progress') &&
-            !seenKeysRef.current.has(key)
-          ) {
-            newNotifs.push({
-              id: key,
-              type: 'assigned',
-              title: 'Tiket Ditugaskan ke Kamu',
-              body: `${t.ticket_id} — ${t.title}`,
-              ticketPath: `/tickets/${t.ticket_id}`,
-              timestamp: t.updated_at || t.created_at,
-              read: false,
+
+          // Check if there is a CLAIM_APPROVED log
+          const claimApproveLogs = (t.progress_logs || []).filter(
+            (l) => l.notes && l.notes.includes('[CLAIM_APPROVED]')
+          );
+
+          if (claimApproveLogs.length > 0) {
+            claimApproveLogs.forEach((log) => {
+              const key = makeKey('prog_claim_approved', t.id, log.id);
+              if (!seenKeysRef.current.has(key)) {
+                const match = log.notes.match(/Catatan PM:\s*(.*)/i);
+                const pmNote = match ? match[1].trim() : '';
+                newNotifs.push({
+                  id: key,
+                  type: 'client_update',
+                  title: 'Claim Tiket Disetujui PM',
+                  body: `${t.ticket_id} — ${t.title}${pmNote ? ` | Catatan PM: "${pmNote}"` : ''}`,
+                  ticketPath: `/tickets/tasks`,
+                  timestamp: log.created_at,
+                  read: false,
+                });
+              }
             });
+          } else {
+            // General direct assignment notification
+            const key = makeKey('prog_assign', t.id, t.status);
+            if (
+              (t.status === 'assigned' || t.status === 'in_progress') &&
+              !seenKeysRef.current.has(key)
+            ) {
+              newNotifs.push({
+                id: key,
+                type: 'assigned',
+                title: 'Tiket Ditugaskan ke Kamu',
+                body: `${t.ticket_id} — ${t.title}`,
+                ticketPath: `/tickets/${t.ticket_id}`,
+                timestamp: t.updated_at || t.created_at,
+                read: false,
+              });
+            }
           }
         });
 
-        // Notify 2: PM rejected this programmer's work [PM_REVIEW_TIDAK_OK] marker in logs
+        // Notify 2: PM rejected this programmer's claim [CLAIM_REJECTED]
+        tickets.forEach((t) => {
+          const claimRejectLogs = (t.progress_logs || []).filter(
+            (l) => l.notes && l.notes.includes('[CLAIM_REJECTED]')
+          );
+          claimRejectLogs.forEach((log) => {
+            // Check if this rejection was for this programmer
+            const isForMe =
+              log.notes.includes(user.name) ||
+              log.notes.includes(`ID: ${user.id}`) ||
+              (t.progress_logs || []).some(
+                (pl) => pl.user_id === user.id && pl.notes?.includes('[CLAIM_TICKET]')
+              );
+            if (!isForMe) return;
+
+            const key = makeKey('prog_claim_rejected', t.id, log.id);
+            if (!seenKeysRef.current.has(key)) {
+              const match = log.notes.match(/Catatan PM:\s*(.*)/i);
+              const pmNote = match ? match[1].trim() : '';
+              newNotifs.push({
+                id: key,
+                type: 'escalated_owner', // Red alert icon
+                title: 'Claim Tiket Ditolak PM',
+                body: `${t.ticket_id} — ${t.title}${pmNote ? ` | Catatan PM: "${pmNote}"` : ''}`,
+                ticketPath: `/tickets/available`,
+                timestamp: log.created_at,
+                read: false,
+              });
+            }
+          });
+        });
+
+        // Notify 3: PM rejected this programmer's work [PM_REVIEW_TIDAK_OK] marker in logs
         tickets.forEach((t) => {
           const isAssigned = t.assignments?.some(
             (a) => a.programmer_id === user.id || a.programmer?.id === user.id
@@ -209,11 +269,13 @@ export const NotificationProvider = ({ children }) => {
           rejectionLogs.forEach((log) => {
             const key = makeKey('prog_rejected', t.id, log.id);
             if (!seenKeysRef.current.has(key)) {
+              const match = log.notes.match(/Catatan PM:\s*(.*)/i);
+              const pmNote = match ? match[1].trim() : '';
               newNotifs.push({
                 id: key,
                 type: 'escalated_owner', // red icon for rejection
                 title: 'Pengerjaan Dikembalikan PM',
-                body: `${t.ticket_id} — Perlu diperbaiki. Cek log tiket.`,
+                body: `${t.ticket_id} — Perlu diperbaiki.${pmNote ? ` Catatan PM: "${pmNote}"` : ''}`,
                 ticketPath: `/tickets/${t.ticket_id}`,
                 timestamp: log.created_at,
                 read: false,

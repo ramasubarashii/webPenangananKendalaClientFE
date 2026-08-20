@@ -10,6 +10,8 @@ import { CreateTicket } from './components/CreateTicket';
 import { WalkInTicket } from './components/WalkInTicket';
 import { AssignTicket } from './components/AssignTicket';
 import { MyTasks } from './components/MyTasks';
+import { AvailableTickets } from './components/AvailableTickets';
+import { ClaimApproval } from './components/ClaimApproval';
 import { Reports } from './components/Reports';
 import { OwnerIssues } from './components/OwnerIssues';
 import { TicketDetail } from './components/TicketDetail';
@@ -151,6 +153,24 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['programmer']}>
                   <MyTasks />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="tickets/available"
+              element={
+                <ProtectedRoute allowedRoles={['programmer']}>
+                  <AvailableTickets />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="tickets/claim-approval"
+              element={
+                <ProtectedRoute allowedRoles={['project_manager']}>
+                  <ClaimApproval />
                 </ProtectedRoute>
               }
             />
